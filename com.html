@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Кружок.Com — Центр детского творчества и спорта</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Inter', 'sans-serif']
+          },
+          colors: {
+            navyDeep: '#0B1324',
+            navyBase: '#111C33',
+            navyRoyal: '#1E40AF',
+            royalBlue: '#1D4ED8',
+            royalBright: '#2563EB',
+            slateGraphite: '#2B3340',
+            slateCard: '#374151',
+            slateMuted: '#4B5563',
+            slateLight: '#CBD5E1',
+            slateDim: '#94A3B8'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Стеклянный и графитово-синий эффект */
+    .glass-nav {
+      background: rgba(11, 19, 36, 0.84);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .slate-navy-card {
+      background: linear-gradient(145deg, rgba(43, 51, 64, 0.86), rgba(17, 28, 51, 0.92));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    /* Архитектурная сетка Hero */
+    .hero-grid {
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+      background-size: 46px 46px;
+    }
+
+    /* Физические перетаскиваемые иконки */
+    .physics-badge {
+      position: absolute;
+      left: 0;
+      top: 0;
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
+      will-change: transform;
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .physics-badge:hover {
+      border-color: rgba(147, 197, 253, 0.9);
+      background-color: rgba(29, 78, 216, 0.65);
+      box-shadow: 0 0 26px rgba(59, 130, 246, 0.45);
+      z-index: 25;
+    }
+    .physics-badge.dragging {
+      cursor: grabbing;
+      border-color: #93C5FD;
+      background-color: rgba(37, 99, 235, 0.85);
+      box-shadow: 0 0 36px rgba(37, 99, 235, 0.7), 0 14px 30px rgba(0, 0, 0, 0.65);
+      z-index: 40;
+    }
+
+    /* Анимация переключения вкладок */
+    @keyframes tabFadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-tab {
+      animation: tabFadeSlide 0.26s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-navyBase text-slateLight font-sans antialiased selection:bg-royalBright selection:text-white overflow-x-hidden">
+
+  <!-- ==================== 1. ВЕРХНЯЯ НАВИГАЦИЯ И HERO С ФИЗИКОЙ ИКОНОК ==================== -->
+  <header class="relative w-full">
+    <div id="hero-arena" class="relative min-h-[680px] sm:min-h-[730px] lg:min-h-[770px] flex flex-col justify-between overflow-hidden bg-navyDeep hero-grid">
+      <!-- Фоновое фото дворца школьников + тёмно-сине-графитовый градиент -->
+      <div class="absolute inset-0 z-0 pointer-events-none">
+        <img
+          src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1920&q=80"
+          onerror="this.src='https://placehold.co/1920x850/0B1324/94A3B8?text=%D0%9A%D1%80%D1%83%D0%B6%D0%BE%D0%BA.Com'"
+          alt="Современный дворец школьников и спортивный комплекс"
+          class="w-full h-full object-cover object-center opacity-28 grayscale-[35%] scale-105"
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-navyDeep/88 via-navyBase/75 to-navyBase"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-navyDeep/95 via-slateGraphite/55 to-navyRoyal/40"></div>
+        <div class="absolute -top-24 right-1/4 w-[480px] h-[480px] rounded-full bg-royalBlue/20 blur-3xl"></div>
+        <div class="absolute bottom-16 right-12 w-[360px] h-[360px] rounded-full bg-slateMuted/20 blur-3xl"></div>
+      </div>
+
+      <!-- Стеклянная панель навигации -->
+      <div class="relative z-30 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <nav class="glass-nav rounded-2xl border border-slate-500/25 px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xl shadow-black/60">
+          <!-- Мини-логотип Кружок.Com -->
+          <a href="#" class="flex items-center space-x-2.5 group shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-royalBright to-navyRoyal border border-blue-300/40 flex items-center justify-center shadow-lg group-hover:scale-105 transition">
+              <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="10" stroke="#FFFFFF" stroke-width="2.6" stroke-dasharray="44 12" />
+                <path d="M12.5 16.2L15 18.7L20.2 13.2" stroke="#CBD5E1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">
+              Кружок<span class="text-blue-400">.Com</span>
+            </span>
+          </a>
+
+          <!-- Якорные ссылки -->
+          <div class="hidden lg:flex items-center space-x-6 text-sm font-semibold">
+            <a href="#about" id="nav-about" class="text-slate-300 hover:text-white transition">О центре</a>
+            <a href="#why-us" id="nav-why" class="text-slate-300 hover:text-white transition">Почему мы</a>
+            <a href="#hub" id="nav-directions" class="text-slate-300 hover:text-white transition">Интерактивный хаб</a>
+            <a href="#catalog" id="nav-catalog" class="text-slate-300 hover:text-white transition">Каталог</a>
+            <a href="#footer" id="nav-contacts" class="text-slate-300 hover:text-white transition">Контакты</a>
+          </div>
+
+          <!-- Переключатель языков RUS / KAZ / ENG и кнопка кабинета -->
+          <div class="flex items-center space-x-2.5 sm:space-x-3.5">
+            <div class="flex items-center space-x-1 bg-slateGraphite/90 p-1 rounded-xl border border-slate-500/30 text-xs font-extrabold">
+              <button onclick="setLang('RUS')" id="lang-RUS" class="lang-btn px-2.5 py-1 rounded-lg bg-royalBright text-white transition cursor-pointer">RUS</button>
+              <button onclick="setLang('KAZ')" id="lang-KAZ" class="lang-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white transition cursor-pointer">KAZ</button>
+              <button onclick="setLang('ENG')" id="lang-ENG" class="lang-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white transition cursor-pointer">ENG</button>
+            </div>
+
+            <button
+              onclick="openModal('cabinet')"
+              id="nav-cabinet-btn"
+              class="flex items-center space-x-2 bg-slateCard/90 hover:bg-royalBright border border-slate-400/30 text-white text-xs sm:text-sm font-bold px-3.5 py-2 rounded-xl shadow-lg transition cursor-pointer"
+            >
+              <svg class="w-4 h-4 text-blue-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+              <span class="hidden sm:inline" id="nav-cabinet-text">Кабинет родителя</span>
+            </button>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Слой с 14 интерактивными физическими иконками -->
+      <div id="physics-layer" class="absolute inset-0 z-10 overflow-hidden"></div>
+
+      <!-- Панель управления физикой в верхнем правом углу Hero -->
+      <div class="relative z-30 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3 flex justify-end pointer-events-none">
+        <div class="pointer-events-auto inline-flex flex-wrap items-center gap-2 bg-slateGraphite/85 backdrop-blur-md border border-slate-400/30 rounded-2xl px-3.5 py-2 text-xs text-slate-200 shadow-xl">
+          <span class="hidden md:inline text-slate-300 font-medium">Хватайте и кидайте иконки:</span>
+          <button
+            onclick="shakePhysicsIcons()"
+            class="px-3 py-1 rounded-xl bg-royalBright hover:bg-blue-500 text-white font-bold transition cursor-pointer shadow"
+          >
+            Встряхнуть
+          </button>
+          <button
+            onclick="toggleGravity()"
+            id="gravity-btn"
+            class="px-3 py-1 rounded-xl bg-slateCard hover:bg-slateMuted border border-slate-400/30 text-slate-100 font-bold transition cursor-pointer"
+          >
+            Гравитация: ВЫКЛ
+          </button>
+          <button
+            onclick="resetPhysicsIcons()"
+            class="px-3 py-1 rounded-xl bg-navyBase/80 hover:bg-navyDeep border border-slate-500/30 text-slate-200 font-semibold transition cursor-pointer"
+          >
+            Сбросить
+          </button>
+        </div>
+      </div>
+
+      <!-- Контент главного экрана (Hero) -->
+      <div class="relative z-20 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 my-auto py-10 pointer-events-none">
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center space-x-2.5 bg-slateGraphite/85 border border-slate-400/30 backdrop-blur-md px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-slate-200 mb-6 shadow-lg">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse"></span>
+            <span id="hero-badge">Государственный образовательный заказ • ED24.KZ / DamuBala</span>
+          </div>
+
+          <h1 id="hero-title" class="text-3xl sm:text-5xl lg:text-[52px] font-black text-white leading-[1.14] tracking-tight drop-shadow-xl">
+            В нашем центре работает более <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-slate-200">96 кружков!</span>
+          </h1>
+
+          <p id="hero-subtitle" class="mt-5 text-slate-300 text-base sm:text-lg max-w-xl leading-relaxed">
+            Современное образовательно-спортивное пространство: бесплатные спортивные секции, творческие мастерские и IT-лаборатории для детей и подростков от 4 до 17 лет.
+          </p>
+
+          <!-- Две главные кнопки -->
+          <div class="mt-9 flex flex-col sm:flex-row gap-4 max-w-md pointer-events-auto">
+            <button
+              onclick="openModal('apply')"
+              id="btn-apply"
+              class="w-full sm:w-auto flex-1 bg-gradient-to-r from-navyRoyal to-royalBright hover:from-royalBlue hover:to-blue-500 text-white font-bold py-4 px-7 rounded-2xl shadow-xl shadow-navyDeep/90 border border-blue-300/30 transition transform hover:-translate-y-0.5 text-center cursor-pointer"
+            >
+              Подать заявку
+            </button>
+            <a
+              href="#catalog"
+              id="btn-catalog"
+              class="w-full sm:w-auto flex-1 bg-slateGraphite/90 hover:bg-slateCard text-slate-100 font-bold py-4 px-7 rounded-2xl border border-slate-400/35 shadow-xl transition transform hover:-translate-y-0.5 text-center"
+            >
+              Каталог кружков
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Тёмно-синий волновой переход в блок «О центре» -->
+      <div class="relative z-20 w-full overflow-hidden leading-none pointer-events-none -mb-1">
+        <svg class="relative block w-full h-16 sm:h-24" viewBox="0 0 1440 120" preserveAspectRatio="none">
+          <path
+            d="M0,38 C320,122 560,-18 880,62 C1140,124 1310,26 1440,50 L1440,120 L0,120 Z"
+            fill="#1E40AF"
+            fill-opacity="0.55"
+          ></path>
+          <path
+            d="M0,70 C360,12 720,128 1080,52 C1260,18 1370,48 1440,66 L1440,120 L0,120 Z"
+            fill="#111C33"
+          ></path>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 3. БЛОК «О ЦЕНТРЕ» И 4 СИНЕ-СЕРЫЕ КАРТОЧКИ СТАТИСТИКИ ==================== -->
+  <section id="about" class="bg-navyBase py-16 sm:py-24 px-4 sm:px-6 lg:px-8 relative">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center mb-16">
+        <div class="lg:col-span-7 space-y-5">
+          <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-blue-400">
+            <span class="w-6 h-0.5 bg-blue-400"></span>
+            <span>О нашем образовательном комплексе</span>
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-extrabold text-white leading-tight">
+            Единая тёмно-синяя экосистема развития талантов и спорта
+          </h2>
+          <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+            Организации дополнительного образования играют ключевую роль в раскрытии индивидуальных, социальных и профессиональных способностей ребёнка. Четырёхэтажный комплекс <strong class="text-white">Кружок.Com</strong> площадью 51 271 кв.м включает 842 учебных и тренировочных помещения: плавательный бассейн, теннисный корт, легкоатлетический манеж, хореографические залы, IT-технопарк и зимний сад.
+          </p>
+          <div class="pt-1">
+            <button
+              onclick="openModal('aboutMore')"
+              class="inline-flex items-center space-x-2 bg-slateCard hover:bg-slateMuted text-white font-extrabold text-xs sm:text-sm uppercase tracking-wider px-6 py-3 rounded-xl border border-slate-400/30 shadow-lg transition cursor-pointer"
+            >
+              <span>О НАС..</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 slate-navy-card rounded-3xl p-6 sm:p-8 border border-slate-400/20 shadow-2xl space-y-4">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-royalBlue/35 border border-blue-400/40 text-blue-300 flex items-center justify-center font-black text-xl">
+              ★
+            </div>
+            <div>
+              <div class="text-white font-bold text-base">Доступно каждому ребёнку</div>
+              <div class="text-slateDim text-xs">Приём по государственному подушевому финансированию</div>
+            </div>
+          </div>
+          <p class="text-slate-300 text-sm leading-relaxed">
+            Удобное расписание в 2 смены позволяет совмещать школу и кружки. Электронный журнал посещений, расписание турниров и справки доступны онлайн в один клик.
+          </p>
+          <div class="pt-2 flex flex-wrap gap-3">
+            <button
+              onclick="openModal('apply')"
+              class="bg-royalBright hover:bg-blue-500 text-white text-sm font-bold px-5 py-3 rounded-xl transition cursor-pointer shadow-lg"
+            >
+              Записать ребёнка
+            </button>
+            <a
+              href="#why-us"
+              class="bg-slateCard hover:bg-slateMuted text-slate-100 text-sm font-semibold px-5 py-3 rounded-xl border border-slate-400/25 transition"
+            >
+              Почему мы?
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 сине-серые карточки статистики -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="group bg-gradient-to-br from-navyRoyal via-royalBlue to-slateGraphite rounded-3xl p-7 border border-blue-300/25 hover:border-blue-300/60 shadow-xl transition-all duration-300 transform hover:-translate-y-1.5">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 text-blue-200 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div class="text-3xl sm:text-4xl font-black text-white tracking-tight counter-num" data-target="12434" data-space="1">12 434</div>
+          <div class="mt-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">Детей обучается</div>
+        </div>
+
+        <div class="group bg-gradient-to-br from-slateGraphite via-slateCard to-navyRoyal rounded-3xl p-7 border border-slate-400/25 hover:border-blue-300/60 shadow-xl transition-all duration-300 transform hover:-translate-y-1.5">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 text-blue-200 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div class="text-3xl sm:text-4xl font-black text-white tracking-tight counter-num" data-target="96">96</div>
+          <div class="mt-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">Кружков и секций</div>
+        </div>
+
+        <div class="group bg-gradient-to-br from-navyRoyal via-royalBlue to-slateGraphite rounded-3xl p-7 border border-blue-300/25 hover:border-blue-300/60 shadow-xl transition-all duration-300 transform hover:-translate-y-1.5">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 text-blue-200 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+          </div>
+          <div class="text-3xl sm:text-4xl font-black text-white tracking-tight counter-num" data-target="3">3</div>
+          <div class="mt-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">Направления развития</div>
+        </div>
+
+        <div class="group bg-gradient-to-br from-slateGraphite via-slateCard to-navyRoyal rounded-3xl p-7 border border-slate-400/25 hover:border-blue-300/60 shadow-xl transition-all duration-300 transform hover:-translate-y-1.5">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 text-blue-200 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div class="text-3xl sm:text-4xl font-black text-white tracking-tight counter-num" data-target="10">10</div>
+          <div class="mt-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">Планируемых мероприятий</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 4. БЛОК ВКЛАДОК №1 «ПОЧЕМУ МЫ?» (6 ВКЛАДОК В СТИЛЕ AFOS.EDU.KZ) ==================== -->
+  <section id="why-us" class="bg-navyDeep py-20 px-4 sm:px-6 lg:px-8 border-y border-slate-600/20">
+    <div class="max-w-7xl mx-auto">
+      <div class="max-w-2xl mb-12">
+        <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-blue-400">
+          <span class="w-6 h-0.5 bg-blue-400"></span>
+          <span>Преимущества платформы Кружок.Com</span>
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-white mt-2">
+          Почему мы? 6 ключевых преимуществ
+        </h2>
+        <p class="text-slateDim text-sm sm:text-base mt-3">
+          Переключайте вкладки в сине-графитовой панели слева, чтобы изучить показатели и стандарты обучения.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+        <!-- Левая колонка: 6 интерактивных табов -->
+        <div class="lg:col-span-5 flex flex-col gap-2.5" role="tablist">
+          <button onclick="selectWhyTab(0)" id="why-btn-0" class="why-tab-btn text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center space-x-3.5">
+            <span class="why-num w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0">01</span>
+            <div>
+              <div class="font-bold text-sm sm:text-base">Бесплатно по госзаказу</div>
+              <div class="text-xs opacity-75">Artsport / DamuBala • 0 ₸ для семьи</div>
+            </div>
+          </button>
+
+          <button onclick="selectWhyTab(1)" id="why-btn-1" class="why-tab-btn text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center space-x-3.5">
+            <span class="why-num w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0">02</span>
+            <div>
+              <div class="font-bold text-sm sm:text-base">Современная база</div>
+              <div class="text-xs opacity-75">Бассейн 25м, корты, STEM-лаборатории</div>
+            </div>
+          </button>
+
+          <button onclick="selectWhyTab(2)" id="why-btn-2" class="why-tab-btn text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center space-x-3.5">
+            <span class="why-num w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0">03</span>
+            <div>
+              <div class="font-bold text-sm sm:text-base">Педагоги-наставники</div>
+              <div class="text-xs opacity-75">Мастера спорта и педагоги-исследователи</div>
+            </div>
+          </button>
+
+          <button onclick="selectWhyTab(3)" id="why-btn-3" class="why-tab-btn text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center space-x-3.5">
+            <span class="why-num w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0">04</span>
+            <div>
+              <div class="font-bold text-sm sm:text-base">96 кружков в 3 сферах</div>
+              <div class="text-xs opacity-75">Спорт, Творчество, IT и Наука</div>
+            </div>
+          </button>
+
+          <button onclick="selectWhyTab(4)" id="why-btn-4" class="why-tab-btn text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center space-x-3.5">
+            <span class="why-num w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0">05</span>
+            <div>
+              <div class="font-bold text-sm sm:text-base">Запись через ED24.KZ</div>
+              <div class="text-xs opacity-75">Прозрачная электронная очередь</div>
+            </div>
+          </button>
+
+          <button onclick="selectWhyTab(5)" id="why-btn-5" class="why-tab-btn text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center space-x-3.5">
+            <span class="why-num w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0">06</span>
+            <div>
+              <div class="font-bold text-sm sm:text-base">Безопасность и комфорт</div>
+              <div class="text-xs opacity-75">FaceID-турникеты, медпункт, зоны ожидания</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Правая колонка: карточка выбранной вкладки с мини-метриками -->
+        <div id="why-panel" class="lg:col-span-7 slate-navy-card rounded-3xl p-7 sm:p-10 border border-slate-400/25 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+          <!-- Заполняется скриптом -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 5. БОЛЬШОЙ МНОГОВКЛАДОЧНЫЙ ИНТЕРАКТИВНЫЙ ХАБ (7 ВКЛАДОК) ==================== -->
+  <section id="hub" class="bg-navyBase py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-8">
+        <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-slate-300">
+          <span class="w-6 h-0.5 bg-royalBright"></span>
+          <span>Интерактивный центр • 7 разделов</span>
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-white mt-2">
+          Расписание, События, Достижения, Документы и FAQ
+        </h2>
+      </div>
+
+      <!-- Панель 7 интерактивных вкладок -->
+      <div class="flex flex-wrap gap-2 bg-slateGraphite/85 p-2 rounded-2xl border border-slate-400/25 mb-8" role="tablist">
+        <button onclick="selectHubTab(0)" id="hub-btn-0" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">🏅 Спорт и секции</button>
+        <button onclick="selectHubTab(1)" id="hub-btn-1" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">🎨 Творчество и искусство</button>
+        <button onclick="selectHubTab(2)" id="hub-btn-2" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">🤖 IT, Робототехника и Наука</button>
+        <button onclick="selectHubTab(3)" id="hub-btn-3" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">📅 Афиша мероприятий (10)</button>
+        <button onclick="selectHubTab(4)" id="hub-btn-4" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">🏆 Достижения и рейтинги</button>
+        <button onclick="selectHubTab(5)" id="hub-btn-5" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">📄 Памятка и документы</button>
+        <button onclick="selectHubTab(6)" id="hub-btn-6" class="hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">❓ Частые вопросы (FAQ)</button>
+      </div>
+
+      <!-- Контентная панель 7-вкладочного хаба -->
+      <div id="hub-panel" class="slate-navy-card rounded-3xl p-6 sm:p-10 border border-slate-400/25 shadow-2xl">
+        <!-- Заполняется скриптом -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 6. ИНТЕРАКТИВНЫЙ КАТАЛОГ КРУЖКОВ С ФИЛЬТРАМИ ПО НАПРАВЛЕНИЮ И ВОЗРАСТУ ==================== -->
+  <section id="catalog" class="bg-navyDeep py-20 px-4 sm:px-6 lg:px-8 border-t border-slate-600/20">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-10">
+        <div>
+          <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-blue-400">
+            <span class="w-6 h-0.5 bg-blue-400"></span>
+            <span>Открытый набор • 96 программ</span>
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-extrabold text-white mt-2">
+            Каталог кружков и секций
+          </h2>
+        </div>
+
+        <!-- Поиск + Фильтр по направлению + Фильтр по возрасту -->
+        <div class="flex flex-col lg:flex-row flex-wrap gap-3">
+          <div class="relative sm:w-60">
+            <input
+              type="text"
+              id="club-search"
+              oninput="renderCatalog()"
+              placeholder="Поиск кружка..."
+              class="w-full bg-slateGraphite border border-slate-400/30 focus:border-royalBright rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slateDim outline-none transition"
+            />
+            <svg class="w-4 h-4 text-slateDim absolute left-3.5 top-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+          </div>
+
+          <!-- Фильтр по направлению -->
+          <div class="flex flex-wrap gap-1 bg-slateGraphite p-1 rounded-xl border border-slate-400/25">
+            <button onclick="setCatalogFilter('all')" id="cat-filter-all" class="cat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-royalBright text-white transition cursor-pointer">Все</button>
+            <button onclick="setCatalogFilter('sport')" id="cat-filter-sport" class="cat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">Спорт</button>
+            <button onclick="setCatalogFilter('art')" id="cat-filter-art" class="cat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">Творчество</button>
+            <button onclick="setCatalogFilter('it')" id="cat-filter-it" class="cat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">Наука и IT</button>
+          </div>
+
+          <!-- Фильтр по возрасту -->
+          <div class="flex flex-wrap gap-1 bg-slateGraphite p-1 rounded-xl border border-slate-400/25">
+            <button onclick="setAgeFilter('all')" id="age-filter-all" class="age-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slateMuted text-white transition cursor-pointer">Любой возраст</button>
+            <button onclick="setAgeFilter('6-9')" id="age-filter-6-9" class="age-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">6–9 лет</button>
+            <button onclick="setAgeFilter('10-13')" id="age-filter-10-13" class="age-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">10–13 лет</button>
+            <button onclick="setAgeFilter('14-17')" id="age-filter-14-17" class="age-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer">14–17 лет</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Сетка карточек кружков -->
+      <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Заполняется скриптом -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 7. СЕРАЯ КАРТОЧКА «КАК ЗАПИСАТЬ РЕБЁНКА» + ED24.KZ (КАК НА РЕФЕРЕНСЕ) ==================== -->
+  <section class="bg-navyBase py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+      <div class="rounded-3xl bg-gradient-to-r from-slateMuted/95 via-slateCard/95 to-slateGraphite/95 border border-slate-400/35 p-7 sm:p-11 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="max-w-xl space-y-4">
+          <span class="inline-block bg-navyDeep/50 text-slate-200 border border-slate-300/25 text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full">
+            Электронное зачисление
+          </span>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-white leading-snug">
+            Как записать ребёнка в кружки и секции
+          </h3>
+          <p class="text-slate-200 text-sm sm:text-base leading-relaxed">
+            Подайте заявление онлайн через единый портал детского образования без очередей и бумажных справок.
+          </p>
+          <div class="pt-2 flex flex-wrap gap-5 items-center">
+            <button
+              onclick="openModal('ed24')"
+              class="inline-flex items-center space-x-2 text-white font-extrabold text-base border-b-2 border-white pb-1 hover:text-blue-200 hover:border-blue-200 transition cursor-pointer"
+            >
+              <span>Подробнее..</span>
+            </button>
+            <button
+              onclick="openModal('apply')"
+              class="bg-navyRoyal hover:bg-royalBright text-white text-sm font-bold px-5 py-2.5 rounded-xl border border-blue-300/30 transition cursor-pointer shadow-lg"
+            >
+              Подать заявку сейчас
+            </button>
+          </div>
+        </div>
+
+        <!-- Белая плашка логотипа ED24.KZ -->
+        <div
+          onclick="openModal('ed24')"
+          class="bg-white rounded-3xl px-8 py-6 shadow-2xl border-2 border-slate-300 flex flex-col items-center justify-center shrink-0 w-full sm:w-80 cursor-pointer hover:scale-[1.03] transition"
+        >
+          <svg class="w-16 h-16 mb-2" viewBox="0 0 80 80" fill="none">
+            <path d="M40 40 L40 10 L58 24 Z" fill="#10B981" />
+            <path d="M40 40 L70 40 L56 58 Z" fill="#FACC15" />
+            <path d="M40 40 L40 70 L22 56 Z" fill="#2563EB" />
+            <path d="M40 40 L10 40 L24 22 Z" fill="#EF4444" />
+            <circle cx="40" cy="40" r="6" fill="#FFFFFF" stroke="#1E3A8A" stroke-width="2.5" />
+          </svg>
+          <div class="text-2xl font-black tracking-tight text-blue-800">ED24.KZ</div>
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 text-center mt-1">
+            Все услуги детского образования
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 8. ВЫРАЗИТЕЛЬНЫЙ ТЁМНО-СИНИЙ С СЕРЫМИ АКЦЕНТАМИ ПОДВАЛ С ЛОГОТИПОМ КРУЖОК.COM И МЕССЕНДЖЕРАМИ ==================== -->
+  <footer id="footer" class="bg-gradient-to-br from-navyRoyal via-royalBlue to-navyDeep text-white border-t border-slate-400/25">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-10 pb-10 border-b border-slate-300/20">
+        <!-- Крупный векторный логотип Кружок.Com с фирменным знаком круга, галочки и орбиты -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+          <div class="w-16 h-16 rounded-2xl bg-slateGraphite/80 backdrop-blur-md border border-slate-300/30 flex items-center justify-center shadow-2xl">
+            <svg class="w-12 h-12" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="18" stroke="#FFFFFF" stroke-width="3.2" stroke-dasharray="74 18" stroke-linecap="round" />
+              <ellipse cx="24" cy="24" rx="20" ry="9" transform="rotate(-24 24 24)" stroke="#93C5FD" stroke-width="2" />
+              <path d="M17.5 24.5L22 29L31.5 19" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="40" cy="14" r="3" fill="#CBD5E1" />
+            </svg>
+          </div>
+          <div>
+            <div class="text-3xl sm:text-4xl font-black tracking-tight text-white">
+              Кружок<span class="text-slate-300">.Com</span>
+            </div>
+            <div class="text-slate-200 text-xs sm:text-sm font-medium mt-1">
+              Единый центр детского творчества, спорта и IT-образования
+            </div>
+          </div>
+        </div>
+
+        <!-- Интерактивные кнопки мессенджеров (WhatsApp, Telegram, Instagram) -->
+        <div class="flex flex-col items-center lg:items-end gap-3">
+          <span class="text-xs font-bold uppercase tracking-widest text-slate-200">
+            Быстрая связь в мессенджерах:
+          </span>
+          <div class="flex flex-wrap justify-center gap-3">
+            <!-- WhatsApp -->
+            <button
+              onclick="openMessengerModal('WhatsApp', '+7 (700) 240-96-96', 'Напишите методисту в WhatsApp — ответим за 2 минуты, проверим квоту госзаказа и запишем ребёнка.')"
+              class="inline-flex items-center space-x-2.5 bg-slateGraphite/90 hover:bg-emerald-600 border border-slate-300/30 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.82 14.01c-.24.68-1.41 1.3-1.96 1.38-.52.08-1.18.11-1.9-.12-.44-.14-1-.33-1.72-.64-3.03-1.31-5.01-4.36-5.16-4.56-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.61-.38.81-.38.2 0 .41 0 .58.01.19.01.44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.03.53-.1.2-.15.33-.3.51-.15.18-.32.4-.45.53-.15.15-.31.31-.13.61.18.3.79 1.3 1.7 2.11 1.17 1.04 2.15 1.36 2.45 1.51.3.15.48.13.66-.08.18-.2.76-.88.96-1.19.2-.3.41-.25.68-.15.28.1 1.77.83 2.07.98.3.15.51.23.58.35.08.13.08.73-.16 1.41z"/>
+              </svg>
+              <span>WhatsApp</span>
+            </button>
+
+            <!-- Telegram -->
+            <button
+              onclick="openMessengerModal('Telegram', '@kruzhok_com_bot', 'Официальный Telegram-бот приёмной комиссии: расписание смен, свободные места и уведомления о турнирах.')"
+              class="inline-flex items-center space-x-2.5 bg-slateGraphite/90 hover:bg-sky-600 border border-slate-300/30 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 text-sky-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+              </svg>
+              <span>Telegram</span>
+            </button>
+
+            <!-- Instagram -->
+            <button
+              onclick="openMessengerModal('Instagram', '@kruzhok.com.kz', 'Фотоотчёты с занятий, анонсы открытых уроков и прямые эфиры соревнований в Instagram.')"
+              class="inline-flex items-center space-x-2.5 bg-slateGraphite/90 hover:bg-pink-600 border border-slate-300/30 text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+              <span>Instagram</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Нижняя строка футера -->
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-200">
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2">
+          <span>📍 г. Актау, 19А микрорайон, Дворец школьников</span>
+          <span>🕒 Пн–Сб: 08:30 – 20:30</span>
+          <span>📞 +7 (7292) 40-96-96</span>
+        </div>
+        <div class="font-semibold text-white">
+          © 2026 Кружок.Com. Все права защищены.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== 9. МОДАЛЬНЫЕ ОКНА ==================== -->
+  <div id="modal-backdrop" onclick="closeModal(event)" class="fixed inset-0 z-50 hidden bg-navyDeep/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="modal-box" onclick="event.stopPropagation()" class="bg-slateGraphite border border-slate-400/30 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-tab">
+      <button
+        onclick="hideModal()"
+        aria-label="Закрыть окно"
+        class="absolute top-5 right-5 w-9 h-9 rounded-xl bg-slateCard hover:bg-slateMuted text-slate-100 flex items-center justify-center font-bold transition cursor-pointer"
+      >
+        ✕
+      </button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ==================== СКРИПТ ЛОГИКИ И ФИЗИЧЕСКОГО ДВИЖКА ==================== -->
+  <script>
+    // ---------- 1. ПЕРЕКЛЮЧЕНИЕ ЯЗЫКОВ (RUS / KAZ / ENG) ----------
+    const i18n = {
+      RUS: {
+        nav: ['О центре', 'Почему мы', 'Интерактивный хаб', 'Каталог', 'Контакты'],
+        cabinet: 'Кабинет родителя',
+        badge: 'Государственный образовательный заказ • ED24.KZ / DamuBala',
+        heroTitle: 'В нашем центре работает более <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-slate-200">96 кружков!</span>',
+        heroSub: 'Современное образовательно-спортивное пространство: бесплатные спортивные секции, творческие мастерские и IT-лаборатории для детей и подростков от 4 до 17 лет.',
+        apply: 'Подать заявку',
+        catalog: 'Каталог кружков'
+      },
+      KAZ: {
+        nav: ['Орталық туралы', 'Неліктен біз', 'Интерактивті хаб', 'Каталог', 'Байланыс'],
+        cabinet: 'Ата-ана кабинеті',
+        badge: 'Мемлекеттік білім беру тапсырысы • ED24.KZ / DamuBala',
+        heroTitle: 'Біздің орталықта <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-slate-200">96-дан астам үйірме</span> жұмыс істейді!',
+        heroSub: 'Заманауи білім беру және спорт кеңістігі: 4 пен 17 жас аралығындағы балаларға арналған тегін спорт секциялары, шығармашылық студиялар және IT-зертханалар.',
+        apply: 'Өтінім беру',
+        catalog: 'Үйірмелер каталогы'
+      },
+      ENG: {
+        nav: ['About', 'Why Us', 'Interactive Hub', 'Catalog', 'Contacts'],
+        cabinet: 'Parent Cabinet',
+        badge: 'State Educational Order • ED24.KZ / DamuBala',
+        heroTitle: 'There are over <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-400 to-slate-200">96 clubs</span> at our center!',
+        heroSub: 'Modern educational and sports complex: free sports sections, creative studios, and IT laboratories for children and teenagers aged 4 to 17.',
+        apply: 'Submit an application',
+        catalog: 'Catalog of clubs'
+      }
+    };
+
+    function setLang(lang) {
+      document.querySelectorAll('.lang-btn').forEach((b) => {
+        b.className = 'lang-btn px-2.5 py-1 rounded-lg text-slate-300 hover:text-white transition cursor-pointer';
+      });
+      document.getElementById('lang-' + lang).className =
+        'lang-btn px-2.5 py-1 rounded-lg bg-royalBright text-white transition cursor-pointer';
+
+      const t = i18n[lang];
+      document.getElementById('nav-about').textContent = t.nav[0];
+      document.getElementById('nav-why').textContent = t.nav[1];
+      document.getElementById('nav-directions').textContent = t.nav[2];
+      document.getElementById('nav-catalog').textContent = t.nav[3];
+      document.getElementById('nav-contacts').textContent = t.nav[4];
+      document.getElementById('nav-cabinet-text').textContent = t.cabinet;
+      document.getElementById('hero-badge').textContent = t.badge;
+      document.getElementById('hero-title').innerHTML = t.heroTitle;
+      document.getElementById('hero-subtitle').textContent = t.heroSub;
+      document.getElementById('btn-apply').textContent = t.apply;
+      document.getElementById('btn-catalog').textContent = t.catalog;
+    }
+
+    // ---------- 2. ВКЛАДКИ «ПОЧЕМУ МЫ?» (6 ВКЛАДОК С МИНИ-МЕТРИКАМИ) ----------
+    const whyTabs = [
+      {
+        tag: 'Госзаказ • Artsport / DamuBala',
+        title: 'Бесплатное обучение по государственному образовательному заказу',
+        desc: 'Занятия финансируются государством по системе подушевого нормативного финансирования. Родители не оплачивают абонемент, а ребёнок получает полноценную программу обучения и инвентарь.',
+        metrics: [
+          { val: '0 ₸', lbl: 'Стоимость для родителей' },
+          { val: '2 кружка', lbl: 'Доступно по ваучерам' },
+          { val: '100%', lbl: 'Государственная гарантия' }
+        ],
+        facts: [
+          'Официальный электронный ваучер и договор на портале ED24.KZ',
+          'Прозрачный табель посещаемости в личном кабинете родителя'
+        ],
+        club: 'Олимпийское плавание'
+      },
+      {
+        tag: 'Инфраструктура • 51 271 кв.м',
+        title: 'Современная спортивная, творческая и STEM-база',
+        desc: 'Четырёхэтажный дворец школьников спроектирован по международным стандартам: 25-метровый бассейн, крытые корты, легкоатлетический манеж, хореографические залы и лаборатории робототехники.',
+        metrics: [
+          { val: '842', lbl: 'Учебных и спорт-залов' },
+          { val: '25 м', lbl: 'Олимпийский бассейн' },
+          { val: '4 этажа', lbl: 'Профильных зон' }
+        ],
+        facts: [
+          'Амортизирующее спортивное покрытие и климат-контроль во всех залах',
+          'Оборудование LEGO Spike Prime, Arduino, станки ЧПУ и 3D-принтеры'
+        ],
+        club: 'Робототехника и LEGO Spike'
+      },
+      {
+        tag: 'Команда наставников • 180+ педагогов',
+        title: 'Опытные педагоги-наставники и тренеры высшей категории',
+        desc: 'Занятия ведут мастера спорта международного класса, педагоги-исследователи, победители республиканских конкурсов и практикующие IT-специалисты.',
+        metrics: [
+          { val: '185+', lbl: 'Педагогов и тренеров' },
+          { val: '78%', lbl: 'Высшая и 1-я категория' },
+          { val: '14 лет', lbl: 'Средний стаж наставников' }
+        ],
+        facts: [
+          'Индивидуальный трек развития и подготовка к олимпиадам и турнирам',
+          'Ежемесячные открытые уроки и консультации для родителей'
+        ],
+        club: 'Шахматная академия'
+      },
+      {
+        tag: 'Выбор направлений • 96 программ',
+        title: '96 кружков в 3 ключевых сферах развития ребёнка',
+        desc: 'Ребёнок может попробовать себя в спорте, сценическом искусстве или инженерии. Программы разделены по возрастным ступеням от 4 до 17 лет.',
+        metrics: [
+          { val: '38', lbl: 'Спортивных секций' },
+          { val: '34', lbl: 'Творческих студий' },
+          { val: '24', lbl: 'IT и STEM-лаборатории' }
+        ],
+        facts: [
+          'Удобные утренние, дневные и вечерние смены под школьное расписание',
+          'Переход от базовых групп в сборные команды центра'
+        ],
+        club: 'Национальный ансамбль домбры'
+      },
+      {
+        tag: 'Цифровая очередь • Без бумаги',
+        title: 'Прозрачная онлайн-запись через портал ED24.KZ',
+        desc: 'Подача заявления занимает 3 минуты со смартфона или компьютера. Очередь формируется автоматически без человеческого фактора.',
+        metrics: [
+          { val: '3 мин', lbl: 'Время подачи заявки' },
+          { val: '24/7', lbl: 'Приём заявлений онлайн' },
+          { val: 'SMS', lbl: 'Уведомления о зачислении' }
+        ],
+        facts: [
+          'Автоматическая проверка данных ребёнка через государственные базы',
+          'Мгновенное отображение свободных мест в каждой группе'
+        ],
+        club: 'Веб-дизайн и Frontend'
+      },
+      {
+        tag: 'Защита и забота • Стандарт 360°',
+        title: 'Безопасность, медицинский контроль и зоны комфорта',
+        desc: 'Территория центра оснащена системой контроля доступа, видеонаблюдением, дежурным медицинским кабинетом и уютными зонами ожидания с Wi-Fi для родителей.',
+        metrics: [
+          { val: '24/7', lbl: 'Охрана и видеонаблюдение' },
+          { val: '2 поста', lbl: 'Медицинского контроля' },
+          { val: '100%', lbl: 'Доступная среда' }
+        ],
+        facts: [
+          'Автоматическое уведомление родителей о входе и выходе ребёнка',
+          'Уютный зимний сад и лаунж-зоны для ожидания детей'
+        ],
+        club: 'Художественная гимнастика'
+      }
+    ];
+
+    function selectWhyTab(idx) {
+      document.querySelectorAll('.why-tab-btn').forEach((btn, i) => {
+        const active = i === idx;
+        btn.className = active
+          ? 'why-tab-btn text-left p-4 rounded-2xl border border-blue-300/60 bg-gradient-to-r from-navyRoyal to-royalBright text-white shadow-xl transition-all duration-200 cursor-pointer flex items-center space-x-3.5'
+          : 'why-tab-btn text-left p-4 rounded-2xl border border-slate-400/20 bg-slateGraphite/65 hover:bg-slateGraphite text-slate-300 hover:text-white transition-all duration-200 cursor-pointer flex items-center space-x-3.5';
+
+        const num = btn.querySelector('.why-num');
+        num.className = active
+          ? 'why-num w-9 h-9 rounded-xl bg-white text-navyRoyal flex items-center justify-center font-black text-xs shrink-0'
+          : 'why-num w-9 h-9 rounded-xl bg-slateCard text-slate-200 flex items-center justify-center font-black text-xs shrink-0';
+      });
+
+      const data = whyTabs[idx];
+      const panel = document.getElementById('why-panel');
+      panel.classList.remove('animate-tab');
+      void panel.offsetWidth;
+      panel.classList.add('animate-tab');
+
+      panel.innerHTML = `
+        <div class="space-y-5">
+          <span class="inline-block bg-royalBlue/35 text-blue-200 border border-blue-400/35 text-xs font-extrabold uppercase tracking-wider px-3.5 py-1.5 rounded-full">
+            ${data.tag}
+          </span>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-white leading-snug">
+            ${data.title}
+          </h3>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            ${data.desc}
+          </p>
+
+          <!-- 3 мини-метрики -->
+          <div class="grid grid-cols-3 gap-3 pt-1">
+            ${data.metrics
+              .map(
+                (m) => `
+              <div class="bg-navyDeep/80 border border-slate-400/20 rounded-2xl p-3.5 text-center">
+                <div class="text-lg sm:text-xl font-black text-white">${m.val}</div>
+                <div class="text-[11px] text-slateDim mt-0.5 leading-tight">${m.lbl}</div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+
+          <div class="space-y-2.5 pt-1">
+            ${data.facts
+              .map(
+                (fact) => `
+              <div class="flex items-start space-x-3 bg-slateGraphite/75 border border-slate-400/20 rounded-2xl p-3.5">
+                <span class="w-6 h-6 rounded-lg bg-royalBright/30 text-blue-300 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">✓</span>
+                <span class="text-slate-200 text-sm font-medium">${fact}</span>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+
+        <div class="mt-7 pt-5 border-t border-slate-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="text-xs sm:text-sm text-slateDim">
+            Приём заявок открыт • Возраст <strong class="text-white">4–17 лет</strong>
+          </div>
+          <button
+            onclick="openModal('apply', '${data.club}')"
+            class="bg-gradient-to-r from-navyRoyal to-royalBright hover:from-royalBlue hover:to-blue-500 text-white text-sm font-bold px-6 py-3 rounded-xl border border-blue-300/30 shadow-lg transition cursor-pointer text-center"
+          >
+            Записаться по направлению →
+          </button>
+        </div>
+      `;
+    }
+
+    // ---------- 3. БОЛЬШОЙ МНОГОВКЛАДОЧНЫЙ ИНТЕРАКТИВНЫЙ ХАБ (7 ВКЛАДОК) ----------
+    let activeHubTab = 0;
+    let registeredEvents = new Set();
+    let achievementFilter = 'all';
+    let checkedDocs = new Set([0, 1]);
+    let openFaqIndex = 0;
+
+    const hubScheduleData = {
+      0: {
+        title: 'Спорт и секции — расписание смен и залов',
+        subtitle: '38 спортивных секций • Профессиональные тренеры и олимпийские стандарты подготовки',
+        rows: [
+          { name: 'Олимпийское плавание', hall: 'Бассейн 25м (1 этаж)', shift: 'Пн, Ср, Пт • 09:30 / 15:00', seats: '4 места', club: 'Олимпийское плавание' },
+          { name: 'Юношеский футбол', hall: 'Крытый манеж №1', shift: 'Вт, Чт, Сб • 14:30 / 17:00', seats: '7 мест', club: 'Юношеский футбол' },
+          { name: 'Баскетбол и стритбол', hall: 'Игровой зал «Арена»', shift: 'Пн, Ср, Пт • 16:00', seats: '6 мест', club: 'Баскетбол и стритбол' },
+          { name: 'Художественная гимнастика', hall: 'Зал пластики №104', shift: 'Вт, Чт • 15:30 / 18:00', seats: '5 мест', club: 'Художественная гимнастика' }
+        ]
+      },
+      1: {
+        title: 'Творчество и искусство — студии и мастерские',
+        subtitle: '34 творческие студии • Концертный зал на 600 мест и выставочные галереи',
+        rows: [
+          { name: 'Национальный ансамбль домбры', hall: 'Музыкальное крыло, каб. 212', shift: 'Пн, Ср • 10:00 / 15:30', seats: '8 мест', club: 'Национальный ансамбль домбры' },
+          { name: 'Живопись, графика и керамика', hall: 'Арт-мастерская №208', shift: 'Пн, Чт • 16:30', seats: '10 мест', club: 'Живопись и графика' },
+          { name: 'Современная хореография «Шабыт»', hall: 'Хореографический зал №4', shift: 'Вт, Чт, Сб • 15:00', seats: '6 мест', club: 'Студия танца «Шабыт»' },
+          { name: 'Эстрадный и академический вокал', hall: 'Студия звукозаписи №220', shift: 'Ср, Пт • 16:00', seats: '5 мест', club: 'Эстрадный вокал' }
+        ]
+      },
+      2: {
+        title: 'IT, Робототехника и Наука — лаборатории будущего',
+        subtitle: '24 лаборатории • Подготовка к олимпиадам WRO, FIRST и республиканским хакатонам',
+        rows: [
+          { name: 'Робототехника и LEGO Spike', hall: 'RoboArena, 3 этаж', shift: 'Вт, Чт • 10:00 / 15:00', seats: '6 мест', club: 'Робототехника и LEGO Spike' },
+          { name: 'Веб-дизайн и Frontend-разработка', hall: 'CyberLab №310', shift: 'Ср, Пт • 17:00', seats: '5 мест', club: 'Веб-дизайн и Frontend' },
+          { name: '3D-моделирование и прототипирование', hall: 'FabLab №315', shift: 'Ср, Сб • 11:00', seats: '3 места', club: '3D-моделирование и печать' },
+          { name: 'Шахматная академия и логика', hall: 'Шахматный клуб, 2 этаж', shift: 'Вт, Чт, Сб • 16:00', seats: '9 мест', club: 'Шахматная академия' }
+        ]
+      }
+    };
+
+    const eventsList = [
+      { id: 'ev1', date: '24 Ноября • 10:00', title: 'Открытый кубок Каспия по спортивной робототехнике', place: 'Форум-холл', cat: 'IT и Наука' },
+      { id: 'ev2', date: '29 Ноября • 15:00', title: 'Городской заплыв «Юный олимпиец» на 50м и 100м', place: 'Бассейн 25м', cat: 'Спорт' },
+      { id: 'ev3', date: '05 Декабря • 17:00', title: 'Концерт оркестра народных инструментов «Дала сазы»', place: 'Концертный зал', cat: 'Творчество' },
+      { id: 'ev4', date: '12 Декабря • 11:00', title: 'Хакатон юных разработчиков Kruzhok Code Jam', place: 'CyberLab, 3 этаж', cat: 'IT и Наука' },
+      { id: 'ev5', date: '19 Декабря • 14:00', title: 'Зимний шахматный турнир «Белая ладья — 2026»', place: 'Шахматный клуб', cat: 'Спорт' },
+      { id: 'ev6', date: '25 Декабря • 16:00', title: 'Выставка живописи и керамики «Зимняя палитра»', place: 'Арт-галерея', cat: 'Творчество' }
+    ];
+
+    const achievementsList = [
+      { year: '2026', cat: 'it', badge: '1 место • WRO National', title: 'Сборная RoboAktau по спортивной робототехнике', desc: 'Золотые медали в старшей категории и путёвка на международный финал.' },
+      { year: '2026', cat: 'sport', badge: 'Гран-при • Кубок РК', title: 'Юношеская команда по плаванию Кружок.Com', desc: '14 золотых и 9 серебряных медалей на республиканском первенстве.' },
+      { year: '2025', cat: 'art', badge: 'Лауреаты I степени', title: 'Ансамбль домбристов «Жас Дарын»', desc: 'Победа на международном фестивале детского творчества в Астане.' },
+      { year: '2026', cat: 'it', badge: 'Победители хакатона', title: 'Команда Frontend & AI Lab (14–16 лет)', desc: 'Лучший образовательный проект на региональном IT-форуме.' },
+      { year: '2025', cat: 'sport', badge: 'Чемпионы области', title: 'Секция мини-футбола U-13', desc: 'Беспроигрышная серия из 12 матчей в юношеской лиге.' },
+      { year: '2026', cat: 'art', badge: 'Золотой диплом', title: 'Студия академической живописи и графики', desc: 'Специальный приз жюри на выставке молодых художников.' }
+    ];
+
+    const docsChecklist = [
+      { title: 'ИИН ребёнка (4–17 лет) и ИИН одного из родителей', note: 'Проверяется автоматически при входе через ED24.KZ' },
+      { title: 'Свидетельство о рождении ребёнка в цифровом формате', note: 'Подтягивается из сервиса «Цифровые документы»' },
+      { title: 'Медицинская справка формы 027/у о состоянии здоровья', note: 'Обязательна для спортивных секций и плавательного бассейна' },
+      { title: 'Фотография ребёнка 3×4 для электронного пропуска FaceID', note: 'Загружается в личном кабинете после одобрения заявки' },
+      { title: 'Электронное подписание договора на обучение', note: 'Подписывается через ЭЦП или SMS-код на портале ED24.KZ' }
+    ];
+
+    const faqList = [
+      { q: 'Сколько кружков ребёнок может посещать бесплатно по госзаказу?', a: 'По действующим правилам подушевого финансирования один ребёнок может бесплатно посещать до 2 кружков или секций одновременно при наличии свободных ваучеров.' },
+      { q: 'Как узнать, есть ли свободные места в выбранной секции?', a: 'Актуальное количество мест отображается в карточке каждого кружка на нашем сайте и обновляется в реальном времени при подаче заявлений через ED24.KZ.' },
+      { q: 'Можно ли подобрать расписание под первую или вторую смену в школе?', a: 'Да! В 90% кружков сформированы утренние группы (с 09:00 до 11:30) для учеников 2-й смены и дневные/вечерние группы (с 14:30 до 20:00) для учеников 1-й смены.' },
+      { q: 'Что делать, если места в нужном кружке временно закончились?', a: 'Вы можете встать в электронную очередь на портале ED24.KZ или оставить предварительную заявку на нашем сайте — методист уведомит вас сразу при открытии дополнительного набора.' }
+    ];
+
+    function selectHubTab(idx) {
+      activeHubTab = idx;
+      document.querySelectorAll('.hub-tab-btn').forEach((btn, i) => {
+        btn.className =
+          i === idx
+            ? 'hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-navyRoyal to-royalBright text-white shadow-lg border border-blue-300/30 transition cursor-pointer'
+            : 'hub-tab-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-300 hover:text-white hover:bg-slateCard/70 transition cursor-pointer';
+      });
+      renderHubPanel();
+    }
+
+    function renderHubPanel() {
+      const panel = document.getElementById('hub-panel');
+      panel.classList.remove('animate-tab');
+      void panel.offsetWidth;
+      panel.classList.add('animate-tab');
+
+      // Вкладки 0, 1, 2: Таблицы расписания и смен
+      if (activeHubTab <= 2) {
+        const d = hubScheduleData[activeHubTab];
+        panel.innerHTML = `
+          <div class="mb-6">
+            <h3 class="text-xl sm:text-2xl font-extrabold text-white">${d.title}</h3>
+            <p class="text-slateDim text-sm mt-1">${d.subtitle}</p>
+          </div>
+
+          <div class="overflow-x-auto rounded-2xl border border-slate-400/20">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-navyDeep/90 text-xs font-extrabold uppercase tracking-wider text-slate-300 border-b border-slate-400/20">
+                  <th class="py-3.5 px-4">Секция / Студия</th>
+                  <th class="py-3.5 px-4">Зал / Локация</th>
+                  <th class="py-3.5 px-4">Смены и дни</th>
+                  <th class="py-3.5 px-4">Квота</th>
+                  <th class="py-3.5 px-4 text-right">Действие</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-400/15 text-sm">
+                ${d.rows
+                  .map(
+                    (r) => `
+                  <tr class="bg-slateGraphite/55 hover:bg-slateGraphite transition">
+                    <td class="py-4 px-4 font-bold text-white">${r.name}</td>
+                    <td class="py-4 px-4 text-slate-300">${r.hall}</td>
+                    <td class="py-4 px-4 text-slate-200">${r.shift}</td>
+                    <td class="py-4 px-4">
+                      <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-royalBlue/35 text-blue-200 border border-blue-400/30">${r.seats}</span>
+                    </td>
+                    <td class="py-4 px-4 text-right">
+                      <button
+                        onclick="openModal('apply', '${r.club}')"
+                        class="bg-royalBright hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer"
+                      >
+                        Записаться
+                      </button>
+                    </td>
+                  </tr>
+                `
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+        return;
+      }
+
+      // Вкладка 3: Афиша мероприятий (10)
+      if (activeHubTab === 3) {
+        panel.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white">Афиша ближайших турниров, концертов и хакатонов</h3>
+              <p class="text-slateDim text-sm mt-1">10 запланированных событий месяца — вход для родителей свободный</p>
+            </div>
+            <span class="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-slateGraphite border border-slate-400/30 text-xs font-bold text-slate-200">
+              Записано событий: ${registeredEvents.size}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            ${eventsList
+              .map((ev) => {
+                const isReg = registeredEvents.has(ev.id);
+                return `
+                <div class="bg-navyDeep/80 border border-slate-400/20 rounded-2xl p-5 flex flex-col justify-between">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-bold text-blue-300 bg-royalBlue/35 px-2.5 py-1 rounded-lg">${ev.date}</span>
+                      <span class="text-[11px] font-semibold text-slateDim">${ev.cat}</span>
+                    </div>
+                    <h4 class="text-base font-bold text-white leading-snug">${ev.title}</h4>
+                    <div class="text-xs text-slate-300">📍 Место: ${ev.place}</div>
+                  </div>
+                  <button
+                    onclick="toggleEventReg('${ev.id}')"
+                    class="mt-5 w-full py-2.5 px-4 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      isReg
+                        ? 'bg-slateCard text-blue-200 border border-blue-400/40'
+                        : 'bg-royalBright hover:bg-blue-500 text-white'
+                    }"
+                  >
+                    ${isReg ? '✓ Вы записаны (Напоминание активно)' : 'Напомнить / Зарегистрироваться'}
+                  </button>
+                </div>
+              `;
+              })
+              .join('')}
+          </div>
+        `;
+        return;
+      }
+
+      // Вкладка 4: Достижения и рейтинги с фильтрами
+      if (activeHubTab === 4) {
+        const filteredAch = achievementsList.filter((a) => {
+          if (achievementFilter === 'all') return true;
+          if (achievementFilter === '2026' || achievementFilter === '2025') return a.year === achievementFilter;
+          return a.cat === achievementFilter;
+        });
+
+        panel.innerHTML = `
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white">Достижения и победы воспитанников</h3>
+              <p class="text-slateDim text-sm mt-1">Результаты республиканских и международных олимпиад, турниров и фестивалей</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 bg-navyDeep/90 p-1.5 rounded-xl border border-slate-400/25">
+              ${[
+                ['all', 'Все'],
+                ['2026', '2026 год'],
+                ['2025', '2025 год'],
+                ['sport', 'Спорт'],
+                ['art', 'Творчество'],
+                ['it', 'IT и Наука']
+              ]
+                .map(
+                  ([key, lbl]) => `
+                <button
+                  onclick="setAchFilter('${key}')"
+                  class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    achievementFilter === key ? 'bg-royalBright text-white' : 'text-slate-300 hover:text-white'
+                  }"
+                >
+                  ${lbl}
+                </button>
+              `
+                )
+                .join('')}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            ${filteredAch
+              .map(
+                (a) => `
+              <div class="bg-slateGraphite/75 border border-slate-400/25 rounded-2xl p-5 space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-extrabold text-white bg-navyRoyal px-3 py-1 rounded-lg border border-blue-400/30">${a.badge}</span>
+                  <span class="text-xs font-bold text-slateDim">${a.year}</span>
+                </div>
+                <h4 class="text-base font-bold text-white leading-snug">${a.title}</h4>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${a.desc}</p>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `;
+        return;
+      }
+
+      // Вкладка 5: Интерактивный чек-лист документов для зачисления
+      if (activeHubTab === 5) {
+        const pct = Math.round((checkedDocs.size / docsChecklist.length) * 100);
+        panel.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl sm:text-2xl font-extrabold text-white">Интерактивный чек-лист документов для зачисления</h3>
+              <p class="text-slateDim text-sm mt-1">Отмечайте готовые документы галочкой, чтобы проверить готовность к подаче заявления</p>
+            </div>
+            <div class="bg-navyDeep/90 border border-slate-400/25 rounded-2xl px-4 py-2.5 text-right shrink-0">
+              <div class="text-xs text-slateDim">Готовность пакета:</div>
+              <div class="text-lg font-black text-white">${checkedDocs.size} из ${docsChecklist.length} (${pct}%)</div>
+            </div>
+          </div>
+
+          <div class="w-full h-2.5 bg-navyDeep rounded-full overflow-hidden mb-6 border border-slate-400/20">
+            <div class="h-full bg-gradient-to-r from-navyRoyal to-royalBright transition-all duration-300" style="width: ${pct}%"></div>
+          </div>
+
+          <div class="space-y-3">
+            ${docsChecklist
+              .map((doc, idx) => {
+                const checked = checkedDocs.has(idx);
+                return `
+                <div
+                  onclick="toggleDocCheck(${idx})"
+                  class="p-4 rounded-2xl border transition cursor-pointer flex items-start space-x-3.5 ${
+                    checked
+                      ? 'bg-royalBlue/25 border-blue-400/50'
+                      : 'bg-navyDeep/70 border-slate-400/20 hover:bg-slateGraphite/70'
+                  }"
+                >
+                  <div class="w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 mt-0.5 border ${
+                    checked ? 'bg-royalBright border-blue-300 text-white' : 'bg-slateGraphite border-slate-400/40 text-transparent'
+                  }">
+                    ✓
+                  </div>
+                  <div>
+                    <div class="text-sm sm:text-base font-bold ${checked ? 'text-white' : 'text-slate-200'}">${doc.title}</div>
+                    <div class="text-xs text-slateDim mt-0.5">${doc.note}</div>
+                  </div>
+                </div>
+              `;
+              })
+              .join('')}
+          </div>
+        `;
+        return;
+      }
+
+      // Вкладка 6: Частые вопросы (FAQ Аккордеон)
+      if (activeHubTab === 6) {
+        panel.innerHTML = `
+          <div class="mb-6">
+            <h3 class="text-xl sm:text-2xl font-extrabold text-white">Частые вопросы родителей (FAQ)</h3>
+            <p class="text-slateDim text-sm mt-1">Нажмите на вопрос, чтобы раскрыть подробный ответ методиста</p>
+          </div>
+
+          <div class="space-y-3">
+            ${faqList
+              .map((item, idx) => {
+                const isOpen = openFaqIndex === idx;
+                return `
+                <div class="rounded-2xl border ${isOpen ? 'border-blue-400/50 bg-slateGraphite/85' : 'border-slate-400/20 bg-navyDeep/75'} overflow-hidden transition">
+                  <button
+                    onclick="toggleFaq(${idx})"
+                    class="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-white cursor-pointer"
+                  >
+                    <span>${item.q}</span>
+                    <span class="w-7 h-7 rounded-lg bg-slateCard flex items-center justify-center text-xs shrink-0">${isOpen ? '−' : '+'}</span>
+                  </button>
+                  ${
+                    isOpen
+                      ? `<div class="px-4 sm:px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-400/15 pt-3">${item.a}</div>`
+                      : ''
+                  }
+                </div>
+              `;
+              })
+              .join('')}
+          </div>
+        `;
+      }
+    }
+
+    function toggleEventReg(id) {
+      if (registeredEvents.has(id)) registeredEvents.delete(id);
+      else registeredEvents.add(id);
+      renderHubPanel();
+    }
+
+    function setAchFilter(key) {
+      achievementFilter = key;
+      renderHubPanel();
+    }
+
+    function toggleDocCheck(idx) {
+      if (checkedDocs.has(idx)) checkedDocs.delete(idx);
+      else checkedDocs.add(idx);
+      renderHubPanel();
+    }
+
+    function toggleFaq(idx) {
+      openFaqIndex = openFaqIndex === idx ? -1 : idx;
+      renderHubPanel();
+    }
+
+    // ---------- 4. КАТАЛОГ КРУЖКОВ С ФИЛЬТРАМИ ПО НАПРАВЛЕНИЮ И ВОЗРАСТУ ----------
+    const clubsData = [
+      { name: 'Робототехника и LEGO Spike', cat: 'it', catLabel: 'Наука и IT', age: '7–15 лет', ageGroups: ['6-9', '10-13', '14-17'], seats: 6, schedule: 'Вт, Чт • 15:00' },
+      { name: 'Олимпийское плавание', cat: 'sport', catLabel: 'Спорт', age: '6–16 лет', ageGroups: ['6-9', '10-13', '14-17'], seats: 4, schedule: 'Пн, Ср, Пт • 10:00' },
+      { name: 'Шахматная академия', cat: 'it', catLabel: 'Наука и IT', age: '6–17 лет', ageGroups: ['6-9', '10-13', '14-17'], seats: 9, schedule: 'Вт, Чт, Сб • 16:00' },
+      { name: 'Веб-дизайн и Frontend', cat: 'it', catLabel: 'Наука и IT', age: '12–17 лет', ageGroups: ['10-13', '14-17'], seats: 5, schedule: 'Ср, Пт • 17:00' },
+      { name: 'Национальный ансамбль домбры', cat: 'art', catLabel: 'Творчество', age: '6–17 лет', ageGroups: ['6-9', '10-13', '14-17'], seats: 8, schedule: 'Пн, Ср • 15:30' },
+      { name: 'Юношеский футбол', cat: 'sport', catLabel: 'Спорт', age: '7–16 лет', ageGroups: ['6-9', '10-13', '14-17'], seats: 7, schedule: 'Вт, Чт, Сб • 14:30' },
+      { name: 'Живопись, графика и керамика', cat: 'art', catLabel: 'Творчество', age: '6–13 лет', ageGroups: ['6-9', '10-13'], seats: 10, schedule: 'Пн, Чт • 16:30' },
+      { name: '3D-моделирование и прототипирование', cat: 'it', catLabel: 'Наука и IT', age: '10–17 лет', ageGroups: ['10-13', '14-17'], seats: 3, schedule: 'Ср, Сб • 11:00' },
+      { name: 'Баскетбол и стритбол', cat: 'sport', catLabel: 'Спорт', age: '10–17 лет', ageGroups: ['10-13', '14-17'], seats: 6, schedule: 'Пн, Ср, Пт • 16:00' }
+    ];
+
+    let activeCatFilter = 'all';
+    let activeAgeFilter = 'all';
+
+    function setCatalogFilter(cat) {
+      activeCatFilter = cat;
+      document.querySelectorAll('.cat-filter-btn').forEach((btn) => {
+        btn.className = 'cat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer';
+      });
+      document.getElementById('cat-filter-' + cat).className =
+        'cat-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-royalBright text-white transition cursor-pointer';
+      renderCatalog();
+    }
+
+    function setAgeFilter(ageKey) {
+      activeAgeFilter = ageKey;
+      document.querySelectorAll('.age-filter-btn').forEach((btn) => {
+        btn.className = 'age-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer';
+      });
+      document.getElementById('age-filter-' + ageKey).className =
+        'age-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slateMuted text-white transition cursor-pointer';
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const q = (document.getElementById('club-search').value || '').trim().toLowerCase();
+      const grid = document.getElementById('catalog-grid');
+
+      const filtered = clubsData.filter((item) => {
+        const matchCat = activeCatFilter === 'all' || item.cat === activeCatFilter;
+        const matchAge = activeAgeFilter === 'all' || item.ageGroups.includes(activeAgeFilter);
+        const matchText = item.name.toLowerCase().includes(q) || item.catLabel.toLowerCase().includes(q);
+        return matchCat && matchAge && matchText;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full slate-navy-card rounded-3xl p-10 text-center border border-slate-400/25">
+            <div class="text-lg font-bold text-white">По выбранным фильтрам кружки не найдены</div>
+            <p class="text-slateDim text-sm mt-1">Сбросьте поиск или выберите «Все» и «Любой возраст».</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered
+        .map(
+          (club) => `
+        <div class="slate-navy-card rounded-3xl p-6 border border-slate-400/25 hover:border-blue-300/60 shadow-xl flex flex-col justify-between transition transform hover:-translate-y-1">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-royalBlue/40 text-blue-200 border border-blue-400/35">
+                ${club.catLabel}
+              </span>
+              <span class="text-xs font-semibold text-slate-200 bg-slateCard px-2.5 py-1 rounded-full border border-slate-400/25">
+                Свободно мест: ${club.seats}
+              </span>
+            </div>
+            <h3 class="text-lg sm:text-xl font-extrabold text-white leading-snug">${club.name}</h3>
+            <div class="mt-4 space-y-1.5 text-xs sm:text-sm text-slate-300">
+              <div>👤 Возраст: <strong class="text-white">${club.age}</strong></div>
+              <div>🕒 Расписание: <span class="text-slate-200">${club.schedule}</span></div>
+              <div>💳 Оплата: <strong class="text-blue-300">Бесплатно (Госзаказ)</strong></div>
+            </div>
+          </div>
+
+          <button
+            onclick="openModal('apply', '${club.name}')"
+            class="mt-6 w-full bg-gradient-to-r from-navyRoyal to-royalBright hover:from-royalBlue hover:to-blue-500 text-white font-bold text-sm py-3.5 rounded-xl border border-blue-300/25 shadow-lg transition cursor-pointer"
+          >
+            Записаться на кружок
+          </button>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    // ---------- 5. ФИЗИЧЕСКИЙ ДВИЖОК 14 ИНТЕРАКТИВНЫХ ИКОНОК В HERO (С ПЕРЕКЛЮЧАТЕЛЕМ ГРАВИТАЦИИ) ----------
+    const badgesConfig = [
+      { label: 'Шахматы', x: 0.72, y: 0.16, svg: '<path d="M18 21H6v-2l2-2v-3l-2-2 3-5 2-2 1-2 3 2 2 4-2 3 3 2v3l2 2v2z"/>' },
+      { label: 'Баскетбол', x: 0.85, y: 0.21, svg: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.8 5.8c3.6 3.6 3.6 8.8 0 12.4M18.2 5.8c-3.6 3.6-3.6 8.8 0 12.4"/>' },
+      { label: 'Робототехника', x: 0.62, y: 0.28, svg: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 16h6M3 12h2M19 12h2"/>' },
+      { label: 'Музыка', x: 0.90, y: 0.37, svg: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>' },
+      { label: 'Живопись', x: 0.77, y: 0.42, svg: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.3A3.7 3.7 0 0 0 21 10.7C21 6.4 17 3 12 3z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor"/><circle cx="11" cy="7.5" r="1" fill="currentColor"/>' },
+      { label: 'Плавание', x: 0.65, y: 0.54, svg: '<path d="M2 16c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0M2 20c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0"/><circle cx="15" cy="7" r="2"/><path d="M6 12l4-3 4 2 3-1"/>' },
+      { label: 'Футбол', x: 0.84, y: 0.57, svg: '<circle cx="12" cy="12" r="9"/><polygon points="12 8 15.5 10.5 14 14.5 10 14.5 8.5 10.5"/><path d="M12 3v5M20.5 9.5l-5 1M17.5 19l-3.5-4.5M6.5 19l3.5-4.5M3.5 9.5l5 1"/>' },
+      { label: 'Наука', x: 0.55, y: 0.17, svg: '<circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(-30 12 12)"/>' },
+      { label: 'Велоспорт', x: 0.53, y: 0.43, svg: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h4l4 7M10 9l2 7h6"/>' },
+      { label: 'Теннис', x: 0.91, y: 0.72, svg: '<ellipse cx="10" cy="10" rx="5.5" ry="7" transform="rotate(-45 10 10)"/><path d="M14.5 14.5L20 20"/><circle cx="18" cy="7" r="2"/>' },
+      { label: 'Астрономия', x: 0.57, y: 0.69, svg: '<path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5L12 14.4 7.5 16.8l.9-5-3.6-3.5 5-.7L12 3z"/>' },
+      { label: 'Программирование', x: 0.74, y: 0.74, svg: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/>' },
+      { label: 'Танцы', x: 0.64, y: 0.82, svg: '<circle cx="12" cy="5" r="2"/><path d="M8 10l4 2 4-3M12 12v5l-3 4M12 17l4 3"/>' },
+      { label: 'Гимнастика', x: 0.83, y: 0.83, svg: '<circle cx="12" cy="6" r="2"/><path d="M4 11c4-2 12-2 16 0M12 8v7l-4 5M12 15l4 5"/>' }
+    ];
+
+    let bodies = [];
+    let mouse = { x: -9999, y: -9999 };
+    let gravityEnabled = false;
+
+    function toggleGravity() {
+      gravityEnabled = !gravityEnabled;
+      const btn = document.getElementById('gravity-btn');
+      btn.textContent = gravityEnabled ? 'Гравитация: ВКЛ' : 'Гравитация: ВЫКЛ';
+      btn.className = gravityEnabled
+        ? 'px-3 py-1 rounded-xl bg-blue-600 text-white font-bold transition cursor-pointer shadow'
+        : 'px-3 py-1 rounded-xl bg-slateCard hover:bg-slateMuted border border-slate-400/30 text-slate-100 font-bold transition cursor-pointer';
+      if (!gravityEnabled) {
+        bodies.forEach((b) => {
+          b.vy = (Math.random() - 0.5) * 4;
+        });
+      }
+    }
+
+    function initPhysics() {
+      const layer = document.getElementById('physics-layer');
+      const rect = layer.getBoundingClientRect();
+      layer.innerHTML = '';
+      bodies = [];
+
+      badgesConfig.forEach((cfg, idx) => {
+        const el = document.createElement('div');
+        el.className =
+          'physics-badge w-14 h-14 sm:w-[68px] sm:h-[68px] rounded-2xl bg-slateGraphite/75 backdrop-blur-md border border-slate-300/30 text-blue-200 flex flex-col items-center justify-center shadow-xl';
+        el.title = `${cfg.label} — схватите и перетащите!`;
+        el.innerHTML = `
+          <svg class="w-6 h-6 sm:w-7 sm:h-7 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            ${cfg.svg}
+          </svg>
+          <span class="text-[8px] sm:text-[9px] font-bold tracking-tight text-slate-200 mt-1 px-1 truncate max-w-full pointer-events-none">${cfg.label}</span>
+        `;
+        layer.appendChild(el);
+
+        const size = el.offsetWidth || 64;
+        const radius = size / 2;
+        const startX = Math.max(16, Math.min(rect.width - size - 16, rect.width * cfg.x));
+        const startY = Math.max(88, Math.min(rect.height - size - 88, rect.height * cfg.y));
+
+        const body = {
+          el,
+          size,
+          radius,
+          x: startX,
+          y: startY,
+          vx: (Math.random() - 0.5) * 1.1,
+          vy: (Math.random() - 0.5) * 1.1,
+          phase: idx * 0.7,
+          dragging: false,
+          lastX: 0,
+          lastY: 0
+        };
+
+        el.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          el.setPointerCapture(e.pointerId);
+          body.dragging = true;
+          body.vx = 0;
+          body.vy = 0;
+          body.lastX = e.clientX;
+          body.lastY = e.clientY;
+          el.classList.add('dragging');
+        });
+
+        el.addEventListener('pointermove', (e) => {
+          if (!body.dragging) return;
+          const dx = e.clientX - body.lastX;
+          const dy = e.clientY - body.lastY;
+          body.x += dx;
+          body.y += dy;
+          body.vx = dx * 0.72;
+          body.vy = dy * 0.72;
+          body.lastX = e.clientX;
+          body.lastY = e.clientY;
+        });
+
+        const release = () => {
+          if (!body.dragging) return;
+          body.dragging = false;
+          el.classList.remove('dragging');
+        };
+        el.addEventListener('pointerup', release);
+        el.addEventListener('pointercancel', release);
+
+        bodies.push(body);
+      });
+    }
+
+    function resetPhysicsIcons() {
+      const layer = document.getElementById('physics-layer');
+      const rect = layer.getBoundingClientRect();
+      bodies.forEach((b, idx) => {
+        const cfg = badgesConfig[idx];
+        b.x = Math.max(16, Math.min(rect.width - b.size - 16, rect.width * cfg.x));
+        b.y = Math.max(88, Math.min(rect.height - b.size - 88, rect.height * cfg.y));
+        b.vx = (Math.random() - 0.5) * 1.1;
+        b.vy = (Math.random() - 0.5) * 1.1;
+      });
+    }
+
+    function shakePhysicsIcons() {
+      bodies.forEach((b) => {
+        if (!b.dragging) {
+          b.vx = (Math.random() - 0.5) * 17;
+          b.vy = -Math.abs(Math.random() * 14) - 4;
+        }
+      });
+    }
+
+    function animatePhysics(time) {
+      const layer = document.getElementById('physics-layer');
+      if (layer && bodies.length) {
+        const rect = layer.getBoundingClientRect();
+        const minX = 12;
+        const maxX = rect.width - 12;
+        const minY = 82;
+        const maxY = rect.height - 82;
+
+        for (let i = 0; i < bodies.length; i++) {
+          const b = bodies[i];
+          if (!b.dragging) {
+            if (gravityEnabled) {
+              b.vy += 0.34;
+              b.vx *= 0.985;
+              b.vy *= 0.99;
+            } else {
+              b.vx *= 0.975;
+              b.vy *= 0.975;
+            }
+
+            const driftX = gravityEnabled ? 0 : Math.cos(time * 0.0011 + b.phase) * 0.22;
+            const driftY = gravityEnabled ? 0 : Math.sin(time * 0.0014 + b.phase) * 0.24;
+
+            const cx = b.x + b.radius;
+            const cy = b.y + b.radius;
+            const dx = cx - mouse.x;
+            const dy = cy - mouse.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 1 && dist < 115) {
+              const push = ((115 - dist) / 115) * 0.55;
+              b.vx += (dx / dist) * push;
+              b.vy += (dy / dist) * push;
+            }
+
+            b.x += b.vx + driftX;
+            b.y += b.vy + driftY;
+          }
+        }
+
+        // Упругие столкновения между иконками
+        for (let i = 0; i < bodies.length; i++) {
+          for (let j = i + 1; j < bodies.length; j++) {
+            const a = bodies[i];
+            const b = bodies[j];
+            const ax = a.x + a.radius;
+            const ay = a.y + a.radius;
+            const bx = b.x + b.radius;
+            const by = b.y + b.radius;
+            const dx = bx - ax;
+            const dy = by - ay;
+            const dist = Math.hypot(dx, dy);
+            const minDist = a.radius + b.radius + 6;
+
+            if (dist > 0.01 && dist < minDist) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              const overlap = (minDist - dist) * 0.5;
+
+              if (!a.dragging) {
+                a.x -= nx * overlap;
+                a.y -= ny * overlap;
+              }
+              if (!b.dragging) {
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+              }
+
+              const rvx = b.vx - a.vx;
+              const rvy = b.vy - a.vy;
+              const velAlongNormal = rvx * nx + rvy * ny;
+              if (velAlongNormal < 0) {
+                const impulse = -1.6 * velAlongNormal * 0.5;
+                if (!a.dragging) {
+                  a.vx -= impulse * nx;
+                  a.vy -= impulse * ny;
+                }
+                if (!b.dragging) {
+                  b.vx += impulse * nx;
+                  b.vy += impulse * ny;
+                }
+              }
+            }
+          }
+        }
+
+        // Отскок от границ
+        for (let i = 0; i < bodies.length; i++) {
+          const b = bodies[i];
+          if (b.x < minX) {
+            b.x = minX;
+            b.vx = Math.abs(b.vx) * 0.78;
+          } else if (b.x + b.size > maxX) {
+            b.x = maxX - b.size;
+            b.vx = -Math.abs(b.vx) * 0.78;
+          }
+
+          if (b.y < minY) {
+            b.y = minY;
+            b.vy = Math.abs(b.vy) * 0.78;
+          } else if (b.y + b.size > maxY) {
+            b.y = maxY - b.size;
+            b.vy = -Math.abs(b.vy) * (gravityEnabled ? 0.65 : 0.78);
+          }
+
+          const rot = Math.max(-16, Math.min(16, b.vx * 1.5));
+          b.el.style.transform = `translate3d(${b.x.toFixed(1)}px, ${b.y.toFixed(1)}px, 0) rotate(${rot.toFixed(1)}deg)`;
+        }
+      }
+      requestAnimationFrame(animatePhysics);
+    }
+
+    document.getElementById('hero-arena').addEventListener('pointermove', (e) => {
+      const rect = document.getElementById('physics-layer').getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
+    document.getElementById('hero-arena').addEventListener('pointerleave', () => {
+      mouse.x = -9999;
+      mouse.y = -9999;
+    });
+
+    // ---------- 6. АНИМАЦИЯ СЧЁТЧИКОВ СТАТИСТИКИ ----------
+    function initCounters() {
+      const counters = document.querySelectorAll('.counter-num');
+      const obs = new IntersectionObserver(
+        (entries, observer) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target;
+            const target = parseInt(el.dataset.target, 10);
+            const useSpace = el.dataset.space === '1';
+            const start = performance.now();
+            const duration = 1200;
+
+            function step(now) {
+              const p = Math.min((now - start) / duration, 1);
+              const ease = 1 - Math.pow(1 - p, 3);
+              const val = Math.round(target * ease);
+              el.textContent = useSpace ? val.toLocaleString('ru-RU') : val;
+              if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+            observer.unobserve(el);
+          });
+        },
+        { threshold: 0.3 }
+      );
+      counters.forEach((c) => obs.observe(c));
+    }
+
+    // ---------- 7. МОДАЛЬНЫЕ ОКНА ----------
+    function openModal(type, selectedClub = 'Робототехника и LEGO Spike') {
+      const backdrop = document.getElementById('modal-backdrop');
+      const content = document.getElementById('modal-content');
+      backdrop.classList.remove('hidden');
+
+      if (type === 'apply') {
+        const options = clubsData
+          .map((c) => `<option value="${c.name}" ${c.name === selectedClub ? 'selected' : ''}>${c.name} (${c.catLabel})</option>`)
+          .join('');
+
+        content.innerHTML = `
+          <div class="space-y-4">
+            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-blue-200 bg-navyRoyal/70 px-3 py-1 rounded-full">
+              Онлайн-запись • Госзаказ
+            </span>
+            <h3 class="text-2xl font-extrabold text-white">Подать заявку в кружок</h3>
+            <p class="text-slate-300 text-sm">Заполните анкету — методист свяжется с вами и забронирует место в группе.</p>
+
+            <form onsubmit="submitApplication(event)" class="space-y-3.5 pt-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Выберите кружок или секцию</label>
+                <select id="form-club" class="w-full bg-navyBase border border-slate-400/30 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-royalBright">
+                  ${options}
+                </select>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-bold text-slate-300 mb-1">Имя и фамилия ребёнка</label>
+                  <input id="form-child" type="text" required placeholder="Например: Алихан Сериков" class="w-full bg-navyBase border border-slate-400/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slateDim outline-none focus:border-royalBright" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">Возраст</label>
+                  <input id="form-age" type="number" min="4" max="17" required value="9" class="w-full bg-navyBase border border-slate-400/30 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-royalBright" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Телефон родителя (WhatsApp)</label>
+                <input id="form-phone" type="tel" required placeholder="+7 (700) 000-00-00" class="w-full bg-navyBase border border-slate-400/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slateDim outline-none focus:border-royalBright" />
+              </div>
+              <button type="submit" class="w-full bg-gradient-to-r from-navyRoyal to-royalBright hover:from-royalBlue hover:to-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition cursor-pointer mt-2">
+                Отправить заявку
+              </button>
+            </form>
+          </div>
+        `;
+      } else if (type === 'cabinet') {
+        content.innerHTML = `
+          <div class="space-y-4">
+            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-blue-200 bg-navyRoyal/70 px-3 py-1 rounded-full">
+              Личный кабинет родителя
+            </span>
+            <h3 class="text-2xl font-extrabold text-white">Вход по ИИН или телефону</h3>
+            <p class="text-slate-300 text-sm">Отслеживайте статус очереди, посещаемость ребёнка и электронный договор.</p>
+            <form onsubmit="submitCabinetLogin(event)" class="space-y-3.5 pt-1">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">ИИН родителя (12 цифр)</label>
+                <input type="text" maxlength="12" required placeholder="890512300451" class="w-full bg-navyBase border border-slate-400/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slateDim outline-none focus:border-royalBright" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">Номер телефона для SMS-кода</label>
+                <input type="tel" required placeholder="+7 (700) 000-00-00" class="w-full bg-navyBase border border-slate-400/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slateDim outline-none focus:border-royalBright" />
+              </div>
+              <button type="submit" class="w-full bg-royalBright hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition cursor-pointer">
+                Получить SMS-код и войти
+              </button>
+            </form>
+          </div>
+        `;
+      } else if (type === 'aboutMore') {
+        content.innerHTML = `
+          <div class="space-y-4">
+            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-200 bg-slateCard px-3 py-1 rounded-full">
+              Паспорт комплекса Кружок.Com
+            </span>
+            <h3 class="text-2xl font-extrabold text-white">Инфраструктура Дворца школьников</h3>
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Общая площадь комплекса составляет <strong>51 271 кв.м</strong>, в здании размещены <strong>842 кабинета и зала</strong>: олимпийский бассейн, крытый теннисный корт, легкоатлетический манеж, ледовая арена, планетарий, зимний сад и конференц-залы.
+            </p>
+            <button onclick="openModal('apply')" class="w-full bg-royalBright hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition cursor-pointer">
+              Записать ребёнка в центр
+            </button>
+          </div>
+        `;
+      } else if (type === 'ed24') {
+        content.innerHTML = `
+          <div class="space-y-4">
+            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-blue-200 bg-navyRoyal/70 px-3 py-1 rounded-full">
+              Инструкция ED24.KZ
+            </span>
+            <h3 class="text-2xl font-extrabold text-white">Как записаться через ED24.KZ</h3>
+            <div class="space-y-3 pt-2 text-sm text-slate-200">
+              <div class="bg-navyBase/80 border border-slate-400/20 rounded-2xl p-4">
+                <strong class="text-blue-300">Шаг 1.</strong> Авторизуйтесь на портале <strong>ED24.KZ</strong> по ИИН родителя.
+              </div>
+              <div class="bg-navyBase/80 border border-slate-400/20 rounded-2xl p-4">
+                <strong class="text-blue-300">Шаг 2.</strong> Выберите организацию <strong>Кружок.Com</strong>, кружок и удобную смену.
+              </div>
+              <div class="bg-navyBase/80 border border-slate-400/20 rounded-2xl p-4">
+                <strong class="text-blue-300">Шаг 3.</strong> Подпишите электронное заявление по SMS — место закрепляется автоматически.
+              </div>
+            </div>
+            <button onclick="openModal('apply')" class="w-full bg-royalBright hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition cursor-pointer">
+              Заполнить предварительную заявку
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function openMessengerModal(platform, handle, description) {
+      const backdrop = document.getElementById('modal-backdrop');
+      const content = document.getElementById('modal-content');
+      backdrop.classList.remove('hidden');
+
+      content.innerHTML = `
+        <div class="space-y-4">
+          <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-blue-200 bg-navyRoyal/70 px-3 py-1 rounded-full">
+            Официальный канал связи
+          </span>
+          <h3 class="text-2xl font-extrabold text-white">Связаться через ${platform}</h3>
+          <p class="text-slate-300 text-sm leading-relaxed">${description}</p>
+          <div class="bg-navyBase border border-slate-400/25 rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs text-slateDim">Контакт центра Кружок.Com:</div>
+              <div class="text-base font-extrabold text-white mt-0.5">${handle}</div>
+            </div>
+            <button onclick="copyContact('${handle}', this)" class="bg-slateCard hover:bg-royalBright text-white text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer">
+              Скопировать
+            </button>
+          </div>
+          <button onclick="openModal('apply')" class="w-full bg-royalBright hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition cursor-pointer">
+            Или оставить заявку на сайте
+          </button>
+        </div>
+      `;
+    }
+
+    function copyContact(text, btn) {
+      const input = document.createElement('input');
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      btn.textContent = 'Скопировано ✓';
+    }
+
+    function submitApplication(e) {
+      e.preventDefault();
+      const child = document.getElementById('form-child').value;
+      const club = document.getElementById('form-club').value;
+      document.getElementById('modal-content').innerHTML = `
+        <div class="text-center py-6 space-y-4">
+          <div class="w-16 h-16 rounded-2xl bg-royalBlue/40 border border-blue-300/40 text-blue-200 flex items-center justify-center text-3xl font-black mx-auto">
+            ✓
+          </div>
+          <h3 class="text-2xl font-extrabold text-white">Заявка успешно принята!</h3>
+          <p class="text-slate-300 text-sm leading-relaxed">
+            Ученик <strong class="text-white">${child}</strong> предварительно записан в группу <strong class="text-blue-300">«${club}»</strong>. Методист центра свяжется с вами в течение 15 минут.
+          </p>
+          <button onclick="hideModal()" class="bg-royalBright hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition cursor-pointer">
+            Отлично
+          </button>
+        </div>
+      `;
+    }
+
+    function submitCabinetLogin(e) {
+      e.preventDefault();
+      document.getElementById('modal-content').innerHTML = `
+        <div class="text-center py-6 space-y-4">
+          <div class="w-16 h-16 rounded-2xl bg-royalBlue/40 border border-blue-300/40 text-blue-200 flex items-center justify-center text-2xl font-black mx-auto">
+            SMS
+          </div>
+          <h3 class="text-2xl font-extrabold text-white">Код подтверждения отправлен</h3>
+          <p class="text-slate-300 text-sm leading-relaxed">
+            Одноразовый 4-значный код отправлен на указанный номер. После подтверждения откроется ваш табель посещений и договоры.
+          </p>
+          <button onclick="hideModal()" class="bg-royalBright hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition cursor-pointer">
+            Закрыть
+          </button>
+        </div>
+      `;
+    }
+
+    function hideModal() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+    }
+    function closeModal(e) {
+      if (e.target.id === 'modal-backdrop') hideModal();
+    }
+
+    // ---------- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ----------
+    window.addEventListener('DOMContentLoaded', () => {
+      selectWhyTab(0);
+      selectHubTab(0);
+      renderCatalog();
+      initPhysics();
+      requestAnimationFrame(animatePhysics);
+      initCounters();
+    });
+
+    window.addEventListener('resize', () => {
+      resetPhysicsIcons();
+    });
+  </script>
+</body>
+</html>
