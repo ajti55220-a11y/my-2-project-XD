@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TERRAFORGE: WORLD &amp; CIV SIMULATOR</title>
+<style>
+  :root {
+    --glass: rgba(10, 16, 28, 0.82);
+    --glass-hi: rgba(16, 26, 44, 0.94);
+    --border: rgba(125, 211, 252, 0.24);
+    --border-active: rgba(52, 211, 153, 0.95);
+    --accent: #34d399;
+    --accent-2: #38bdf8;
+    --warn: #fbbf24;
+    --danger: #f43f5e;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #050a14;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  #world-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    cursor: none;
+    touch-action: none;
+    z-index: 1;
+  }
+
+  /* =========================================================================
+     ВЕРХНИЙ HUD И БЕГУЩАЯ НОВОСТНАЯ СТРОКА (BREAKING NEWS)
+     ========================================================================= */
+  .top-stack {
+    position: fixed;
+    top: 8px;
+    left: 10px;
+    right: 10px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .top-hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .hud-pill {
+    pointer-events: auto;
+    background: var(--glass);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .plumbob-icon {
+    width: 14px;
+    height: 20px;
+    background: linear-gradient(135deg, #6ee7b7 0%, #10b981 55%, #047857 100%);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.75);
+    flex-shrink: 0;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .stat-item strong {
+    color: var(--text);
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .hud-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.14s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .hud-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(125, 211, 252, 0.45);
+  }
+
+  .hud-btn.active {
+    background: rgba(34, 197, 94, 0.24);
+    border-color: var(--border-active);
+    color: #bbf7d0;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.28);
+  }
+
+  select.biome-select {
+    background: rgba(8, 14, 24, 0.94);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Бегущая новостная строка LIVE TV */
+  .news-ticker-bar {
+    pointer-events: auto;
+    align-self: flex-start;
+    max-width: min(680px, 95vw);
+    background: rgba(12, 18, 32, 0.88);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(244, 63, 94, 0.42);
+    border-radius: 10px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+
+  .news-ticker-bar:hover {
+    border-color: rgba(244, 63, 94, 0.85);
+  }
+
+  .live-badge {
+    background: #e11d48;
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 5px;
+    letter-spacing: 0.06em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    animation: pulseLive 1.1s infinite;
+  }
+
+  @keyframes pulseLive {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+
+  .ticker-text {
+    font-size: 11.5px;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  /* =========================================================================
+     ПАНЕЛЬ НОВОСТНОГО КАНАЛА МИРА (WORLD NEWS FEED)
+     ========================================================================= */
+  .news-drawer {
+    position: fixed;
+    top: 84px;
+    left: 10px;
+    width: 325px;
+    max-width: calc(100vw - 20px);
+    max-height: 52vh;
+    z-index: 28;
+    background: var(--glass-hi);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    border-radius: 14px;
+    padding: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.65);
+  }
+
+  .news-drawer.open {
+    display: flex;
+  }
+
+  .news-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .news-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-right: 2px;
+  }
+
+  .news-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid #38bdf8;
+    border-radius: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background 0.14s ease, transform 0.12s ease;
+  }
+
+  .news-card:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(2px);
+  }
+
+  .news-card.war { border-left-color: #ef4444; }
+  .news-card.crime { border-left-color: #f59e0b; }
+  .news-card.disaster { border-left-color: #ec4899; }
+  .news-card.civ { border-left-color: #10b981; }
+
+  .news-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9.5px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .news-msg {
+    font-size: 11px;
+    line-height: 1.35;
+    color: #f8fafc;
+  }
+
+  /* =========================================================================
+     ИНСПЕКТОР ВЫБРАННОГО ОБЪЕКТА (SIMS / WORLDBOX)
+     ========================================================================= */
+  .sims-inspector {
+    position: fixed;
+    top: 84px;
+    right: 10px;
+    width: 274px;
+    z-index: 28;
+    background: var(--glass-hi);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    border-radius: 15px;
+    padding: 11px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sims-inspector.open {
+    display: flex;
+  }
+
+  .insp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 7px;
+  }
+
+  .insp-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .insp-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(56, 189, 248, 0.16);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .insp-name {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .insp-role {
+    font-size: 10.5px;
+    color: #7dd3fc;
+  }
+
+  .insp-action {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 11px;
+    color: #e2e8f0;
+  }
+
+  .need-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .need-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #cbd5e1;
+  }
+
+  .need-track {
+    width: 100%;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .need-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.15s ease;
+  }
+
+  .insp-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  /* =========================================================================
+     НИЖНИЙ ДОК ИНСТРУМЕНТОВ БОГА (4 ВКЛАДКИ)
+     ========================================================================= */
+  .bottom-dock {
+    position: fixed;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    max-width: calc(100vw - 14px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    pointer-events: none;
+  }
+
+  .tool-tooltip {
+    pointer-events: none;
+    background: rgba(6, 12, 22, 0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 4px 14px;
+    font-size: 11px;
+    color: #bae6fd;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    max-width: 94vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tool-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .cat-tabs {
+    pointer-events: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 3px;
+  }
+
+  .cat-tab {
+    padding: 4px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    transition: all 0.14s ease;
+    white-space: nowrap;
+  }
+
+  .cat-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .cat-tab.active {
+    background: rgba(56, 189, 248, 0.24);
+    border-color: rgba(56, 189, 248, 0.65);
+    color: #e0f2fe;
+  }
+
+  .dock-bar {
+    pointer-events: auto;
+    background: var(--glass);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow-x: auto;
+    max-width: 100%;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .dock-group {
+    display: none;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .dock-group.active {
+    display: flex;
+  }
+
+  .dock-sep {
+    width: 1px;
+    height: 26px;
+    background: rgba(148, 210, 255, 0.18);
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
+
+  .tool-btn {
+    min-width: 50px;
+    height: 44px;
+    padding: 3px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+    flex-shrink: 0;
+  }
+
+  .tool-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-2px);
+    border-color: rgba(125, 211, 252, 0.45);
+  }
+
+  .tool-btn.active {
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.28), rgba(16, 185, 129, 0.14));
+    border-color: var(--border-active);
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .tool-ico { font-size: 16px; line-height: 1; }
+  .tool-lbl { font-size: 9px; font-weight: 600; color: #cbd5e1; }
+  .tool-btn.active .tool-lbl { color: #ecfdf5; }
+
+  .brush-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 3px;
+    flex-shrink: 0;
+  }
+
+  .size-pills { display: flex; gap: 3px; }
+  .sz-btn {
+    width: 22px;
+    height: 19px;
+    border-radius: 5px;
+    font-size: 9.5px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .sz-btn.active { background: rgba(56, 189, 248, 0.28); border-color: #38bdf8; color: #fff; }
+
+  @media (max-width: 820px) {
+    .hide-sm { display: none; }
+    .sims-inspector { top: auto; bottom: 112px; right: 8px; width: 245px; }
+    .news-drawer { top: 76px; width: 280px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="world-canvas"></canvas>
+
+<!-- ВЕРХНИЙ HUD И НОВОСТНАЯ СТРОКА -->
+<div class="top-stack">
+  <header class="top-hud">
+    <div class="hud-pill">
+      <div class="brand-mark">
+        <div class="plumbob-icon"></div>
+        <span>TERRAFORGE</span>
+      </div>
+      <select id="biome-select" class="biome-select" title="Выбрать сценарий мира">
+        <option value="twin_cities">⚔️ Два соперничающих мегаполиса</option>
+        <option value="archipelago">🏝️ Островной архипелаг (4 державы)</option>
+        <option value="frontier">🌲 Дикий фронтир (основание с нуля)</option>
+        <option value="postapoc">☣️ Постапокалипсис и банды</option>
+      </select>
+      <button type="button" id="btn-reset" class="hud-btn" title="Пересоздать мир">🎲 Новый мир</button>
+    </div>
+
+    <div class="hud-pill">
+      <div class="stat-item" title="Города / Люди">🏛️ <strong id="st-civs">0</strong></div>
+      <div class="stat-item" title="Машины на дорогах">🚗 <strong id="st-cars">0</strong></div>
+      <div class="stat-item" title="Воины / Преступники">⚔️ <strong id="st-war">0 / 0</strong></div>
+      <div class="stat-item hide-sm" title="Время суток">🕒 <strong id="st-time">09:30</strong></div>
+    </div>
+
+    <div class="hud-pill">
+      <div style="display:flex;gap:3px;">
+        <button type="button" class="hud-btn view-btn active" data-view="normal">👁️ Мир</button>
+        <button type="button" class="hud-btn view-btn" data-view="politics">🚩 Границы</button>
+        <button type="button" class="hud-btn view-btn" data-view="blood">🩸 Кровь/HP</button>
+      </div>
+      <div style="display:flex;gap:3px;">
+        <button type="button" class="hud-btn spd-btn" data-spd="0">⏸</button>
+        <button type="button" class="hud-btn spd-btn active" data-spd="1">1x</button>
+        <button type="button" class="hud-btn spd-btn" data-spd="2">2x</button>
+        <button type="button" class="hud-btn spd-btn" data-spd="4">4x</button>
+      </div>
+      <button type="button" id="btn-audio" class="hud-btn">🔇 Звук</button>
+      <button type="button" id="btn-snap" class="hud-btn" title="Снимок в PNG">📸</button>
+    </div>
+  </header>
+
+  <!-- ЖИВАЯ БЕГУЩАЯ СТРОКА НОВОСТЕЙ -->
+  <div class="news-ticker-bar" id="news-ticker-bar" title="Нажмите, чтобы открыть полный новостной канал города и мира">
+    <span class="live-badge"><span class="live-dot"></span>LIVE NEWS</span>
+    <span class="ticker-text" id="ticker-latest">Запуск прямой трансляции городов и королевств...</span>
+    <span style="font-size:10px;color:#94a3b8;">▼ Лента</span>
+  </div>
+</div>
+
+<!-- ОТКРЫВАЕМАЯ ЛЕНТА НОВОСТЕЙ -->
+<aside class="news-drawer" id="news-drawer">
+  <div class="news-head">
+    <span>📺 НОВОСТНОЙ КАНАЛ МИРА (клик — переход)</span>
+    <button type="button" id="news-close" class="hud-btn" style="padding:2px 6px;">✕</button>
+  </div>
+  <div class="news-list" id="news-list"></div>
+</aside>
+
+<!-- ИНСПЕКТОР THE SIMS / WORLDBOX -->
+<aside id="sims-inspector" class="sims-inspector">
+  <div class="insp-head">
+    <div class="insp-title-wrap">
+      <div class="insp-avatar" id="insp-avatar">🧑</div>
+      <div>
+        <div class="insp-name" id="insp-name">Житель</div>
+        <div class="insp-role" id="insp-role">Город • Профессия</div>
+      </div>
+    </div>
+    <button type="button" id="insp-close" class="hud-btn" style="padding:3px 7px;">✕</button>
+  </div>
+  <div class="insp-action" id="insp-action">💭 Занимается делами</div>
+  <div id="insp-needs" style="display:flex;flex-direction:column;gap:5px;"></div>
+  <div class="insp-btns">
+    <button type="button" id="insp-heal" class="hud-btn" style="justify-content:center;border-color:rgba(52,211,153,0.4);">💚 Исцелить</button>
+    <button type="button" id="insp-harm" class="hud-btn" style="justify-content:center;border-color:rgba(244,63,94,0.4);">🩸 Урон</button>
+    <button type="button" id="insp-follow" class="hud-btn" style="grid-column:1/-1;justify-content:center;">🎯 Следить камерой</button>
+  </div>
+</aside>
+
+<!-- НИЖНИЙ ДОК ИНСТРУМЕНТОВ -->
+<footer class="bottom-dock">
+  <div id="tool-tooltip" class="tool-tooltip">Инструмент выбора: кликните по жителю, машине, зданию или столице города</div>
+
+  <div class="cat-tabs">
+    <button type="button" class="cat-tab active" data-cat="civ">🏙️ Цивилизация и Города</button>
+    <button type="button" class="cat-tab" data-cat="war">⚔️ Война и Криминал</button>
+    <button type="button" class="cat-tab" data-cat="terrain">🌋 Ландшафт и Стихии</button>
+    <button type="button" class="cat-tab" data-cat="nature">🦌 Природа</button>
+  </div>
+
+  <div class="dock-bar">
+    <div class="brush-controls">
+      <span style="font-size:8.5px;color:var(--muted);text-align:center;font-weight:700;">КИСТЬ</span>
+      <div class="size-pills">
+        <button type="button" class="sz-btn" data-sz="1">S</button>
+        <button type="button" class="sz-btn active" data-sz="3">M</button>
+        <button type="button" class="sz-btn" data-sz="6">L</button>
+      </div>
+    </div>
+
+    <div class="dock-sep"></div>
+
+    <!-- 1. ЦИВИЛИЗАЦИЯ И ГОРОДА -->
+    <div class="dock-group active" data-group="civ">
+      <button type="button" class="tool-btn active" data-tool="inspect" data-tip="Выбор / Инспектор Sims — кликните по любому человеку, машине, дому или городу">
+        <span class="tool-ico">💎</span><span class="tool-lbl">Выбор</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="found_city" data-tip="Основать новый город — создает ратушу нового королевства со своей казной и жителями">
+        <span class="tool-ico">🏛️</span><span class="tool-lbl">Город</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="citizen" data-tip="Поселенец — работает, строит дома, покупает еду, создает семью и платит налоги">
+        <span class="tool-ico">🧑</span><span class="tool-lbl">Житель</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="builder" data-tip="Строитель — прокладывает дороги, мосты и строит дома строго вне дорожного полотна">
+        <span class="tool-ico">👷</span><span class="tool-lbl">Строитель</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="house" data-tip="Жилой дом — ставится только на свободную сушу (не на дорогу и не в воду)">
+        <span class="tool-ico">🏡</span><span class="tool-lbl">Дом</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="farm" data-tip="Ферма — выращивает урожай и пополняет запасы еды города">
+        <span class="tool-ico">🌾</span><span class="tool-lbl">Ферма</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="car" data-tip="Гражданское авто — движется строго по дорогам по правой полосе с соблюдением дистанции">
+        <span class="tool-ico">🚗</span><span class="tool-lbl">Машина</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="police" data-tip="Полицейский патруль — преследует преступников и угонщиков с сиреной и мигалками">
+        <span class="tool-ico">🚓</span><span class="tool-lbl">Полиция</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="ambulance" data-tip="Скорая помощь — мчится к раненым и истекающим кровью жителям и спасает их">
+        <span class="tool-ico">🚑</span><span class="tool-lbl">Скорая</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="firetruck" data-tip="Пожарная машина — тушит горящие здания, машины и лесные пожары">
+        <span class="tool-ico">🚒</span><span class="tool-lbl">Пожарка</span>
+      </button>
+    </div>
+
+    <!-- 2. ВОЙНА И КРИМИНАЛ -->
+    <div class="dock-group" data-group="war">
+      <button type="button" class="tool-btn" data-tool="warrior" data-tip="Воин / Солдат города — формирует отряды и атакует вражеские города в войнах">
+        <span class="tool-ico">⚔️</span><span class="tool-lbl">Воин</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="bandit" data-tip="Бандит / Преступник — грабит магазины и жителей, угоняет машины и убегает от полиции">
+        <span class="tool-ico">🥷</span><span class="tool-lbl">Бандит</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="declare_war" data-tip="Объявить тотальную войну — города начинают полномасштабное вторжение и штурм">
+        <span class="tool-ico">🔥</span><span class="tool-lbl">Война!</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="make_peace" data-tip="Мирный договор — прекращает войны между всеми городами">
+        <span class="tool-ico">🕊️</span><span class="tool-lbl">Мир</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="riot" data-tip="Бунт и восстание — часть жителей берет оружие и поднимает мятеж в городе">
+        <span class="tool-ico">💢</span><span class="tool-lbl">Бунт</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="plague" data-tip="Вспышка болезни — заражает ближайших людей, пока врачи не вылечат их">
+        <span class="tool-ico">☣️</span><span class="tool-lbl">Эпидемия</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="heal_rain" data-tip="Божественное исцеление — восстанавливает здоровье людей и тушит пожары в области">
+        <span class="tool-ico">✨</span><span class="tool-lbl">Исцелить</span>
+      </button>
+    </div>
+
+    <!-- 3. ЛАНДШАФТ И СТИХИИ -->
+    <div class="dock-group" data-group="terrain">
+      <button type="button" class="tool-btn" data-tool="soil" data-tip="Почва и луг — ровная суша для строительства городов, ферм и дорог">
+        <span class="tool-ico">🌱</span><span class="tool-lbl">Почва</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="road" data-tip="Дорога / Мост — соединяет кварталы; над водой автоматически строит мост">
+        <span class="tool-ico">🛣️</span><span class="tool-lbl">Дорога</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="sand" data-tip="Песок — пляжи и пустынные барханы">
+        <span class="tool-ico">🏖️</span><span class="tool-lbl">Песок</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="rock" data-tip="Скала — непроходимая горная порода">
+        <span class="tool-ico">⛰️</span><span class="tool-lbl">Скала</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="water" data-tip="Вода — реки и моря; люди в ней плывут, а машины тонут и глохнут">
+        <span class="tool-ico">💧</span><span class="tool-lbl">Вода</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="tree" data-tip="Лес — источник древесины для стройки; горит при пожарах">
+        <span class="tool-ico">🌲</span><span class="tool-lbl">Лес</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="lava" data-tip="Лава — сжигает постройки, дороги и технику">
+        <span class="tool-ico">🌋</span><span class="tool-lbl">Лава</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="meteor" data-tip="Метеорит — падает с неба, выбивает кратер, поднимает волну и разрушает кварталы">
+        <span class="tool-ico">☄️</span><span class="tool-lbl">Метеор</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="lightning" data-tip="Молния — бьет с неба, поджигает здания и поражает цели">
+        <span class="tool-ico">⚡</span><span class="tool-lbl">Молния</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="cloud" data-tip="Дождевая туча — тушит пожары и смывает кровь с улиц">
+        <span class="tool-ico">🌧️</span><span class="tool-lbl">Туча</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="tornado" data-tip="Торнадо — закручивает машины, воинов и обломки">
+        <span class="tool-ico">🌪️</span><span class="tool-lbl">Торнадо</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="frost" data-tip="Ледниковый луч — замораживает воду в лед и охлаждает лаву в камень">
+        <span class="tool-ico">❄️</span><span class="tool-lbl">Мороз</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="nuke" data-tip="Сейсмический / термоядерный удар — мощнейший взрыв, кратер и ударная волна">
+        <span class="tool-ico">☢️</span><span class="tool-lbl">Удар</span>
+      </button>
+    </div>
+
+    <!-- 4. ПРИРОДА -->
+    <div class="dock-group" data-group="nature">
+      <button type="button" class="tool-btn" data-tool="deer" data-tip="Олени — пасутся в лесах и на лугах, убегают от волков и людей">
+        <span class="tool-ico">🦌</span><span class="tool-lbl">Олень</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="wolf" data-tip="Волки — охотятся на оленей и нападают на одиноких путников">
+        <span class="tool-ico">🐺</span><span class="tool-lbl">Волк</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="bird" data-tip="Птицы — летают стаями над городами и лесами">
+        <span class="tool-ico">🕊️</span><span class="tool-lbl">Птицы</span>
+      </button>
+      <button type="button" class="tool-btn" data-tool="fish" data-tip="Рыбы — плавают косяками строго в водоемах">
+        <span class="tool-ico">🐟</span><span class="tool-lbl">Рыбы</span>
+      </button>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  // =========================================================================
+  // 1. КОНСТАНТЫ ТАЙЛОВ, СЕТКА ЗАНЯТОСТИ (OCCUPANCY) И КОРОЛЕВСТВА
+  // =========================================================================
+  const TILE = {
+    DEEP_WATER: 0,
+    WATER: 1,
+    ICE: 2,
+    SAND: 3,
+    GRASS: 4,
+    PARK: 5,
+    ROCK: 6,
+    ROAD: 7,
+    BRIDGE: 8,
+    SCORCHED: 9,
+    CRATER: 10,
+    LAVA: 11
+  };
+
+  // Флаги занятости клеток, чтобы дома НИКОГДА не строились на дорогах и друг на друге
+  const OCC = {
+    FREE: 0,
+    ROAD_ZONE: 1, // само дорожное полотно + обязательный отступ безопасности
+    BUILDING: 2   // занято фундаментом здания
+  };
+
+  const CIV_PRESETS = [
+    { name: 'Аурелия',   color: '#3b82f6', light: '#93c5fd', banner: '🔵' },
+    { name: 'Валдар',    color: '#ef4444', light: '#fca5a5', banner: '🔴' },
+    { name: 'Сильвания', color: '#10b981', light: '#6ee7b7', banner: '🟢' },
+    { name: 'Солярис',   color: '#f59e0b', light: '#fde68a', banner: '🟡' }
+  ];
+
+  const FIRST_NAMES = [
+    'Алекс', 'Мия', 'Лео', 'София', 'Макс', 'Ева', 'Давид', 'Алиса',
+    'Артем', 'Хлоя', 'Марк', 'Нора', 'Тимур', 'Кира', 'Оливер', 'Эмма',
+    'Лукас', 'Анна', 'Даниэль', 'Вера', 'Итан', 'Лиза', 'Роман', 'Майя'
+  ];
+  const LAST_NAMES = [
+    'Морган', 'Смит', 'Волков', 'Картер', 'Брукс', 'Новак', 'Ли', 'Грант',
+    'Кларк', 'Вуд', 'Фостер', 'Холл', 'Рейес', 'Ким', 'Бейкер', 'Хилл'
+  ];
+
+  const canvas = document.getElementById('world-canvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  const TSIZE = 16; // размер клетки 16x16 px
+  let W = 0, H = 0;
+  let COLS = 96, ROWS = 62;
+
+  let terrain = new Uint8Array(0);
+  let variant = new Uint8Array(0);
+  let occupancy = new Uint8Array(0);
+  let territory = new Int8Array(0); // id города-владельца клетки или -1
+
+  // =========================================================================
+  // 2. СОСТОЯНИЕ МИРА, ДИПЛОМАТИИ, НОВОСТЕЙ И ОБЪЕКТОВ
+  // =========================================================================
+  const sim = {
+    tool: 'inspect',
+    brushSize: 3,
+    speed: 1,
+    viewMode: 'normal', // normal | politics | blood
+    biome: 'twin_cities',
+    timeOfDay: 0.38,
+    tick: 0,
+    shake: 0,
+    flash: 0,
+    cam: { x: 0, y: 0, zoom: 1, drag: false, sx: 0, sy: 0, cx: 0, cy: 0 },
+    pointer: { sx: -999, sy: -999, wx: -999, wy: -999, down: false },
+    selected: null,
+    followSelected: false,
+    highlightEvent: null, // { x, y, ttl } для подсветки события из новостей
+
+    cities: [],      // города/королевства со столицей, бюджетом, ресурсами, дипломатией
+    wars: new Set(), // пары враждующих городов "id1:id2"
+    buildings: [],   // ратуши, дома, фермы, магазины, больницы, участки
+    trees: [],
+    humans: [],      // жители, строители, фермеры, врачи, пожарные, полиция, воины, бандиты
+    vehicles: [],    // гражданские авто, полиция, скорая, пожарная
+    animals: [],     // олени, волки, птицы, рыбы
+    bloodStains: [], // пятна и лужи крови
+    particles: [],
+    meteors: [],
+    bolts: [],
+    clouds: [],
+    tornadoes: [],
+    shockwaves: [],
+    news: []         // лента новостей мира
+  };
+
+  // =========================================================================
+  // 3. ПРОЦЕДУРНЫЙ ЗВУКОВОЙ ДВИЖОК (WEB AUDIO API)
+  // =========================================================================
+  const sound = {
+    enabled: false,
+    ctx: null,
+    toggle() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (!this.ctx) return;
+      this.enabled = !this.enabled;
+      if (this.enabled && this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    play(f1, f2, dur, type = 'sine', gain = 0.1) {
+      if (!this.enabled || !this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(f1, now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, f2), now + dur);
+      g.gain.setValueAtTime(gain, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      osc.connect(g); g.connect(this.ctx.destination);
+      osc.start(); osc.stop(now + dur + 0.02);
+    },
+    explosion() { this.play(135, 22, 0.85, 'sawtooth', 0.25); },
+    thunder()   { this.play(220, 45, 0.65, 'square', 0.18); },
+    sword()     { if (Math.random() < 0.35) this.play(920, 380, 0.09, 'triangle', 0.05); },
+    siren()     { if (Math.random() < 0.03) this.play(680, 940, 0.22, 'triangle', 0.04); },
+    horn()      { if (Math.random() < 0.04) this.play(340, 320, 0.16, 'sawtooth', 0.04); },
+    crash()     { this.play(190, 48, 0.28, 'square', 0.16); },
+    build()     { if (Math.random() < 0.25) this.play(260, 180, 0.08, 'triangle', 0.04); }
+  };
+
+  // =========================================================================
+  // 4. ЖИВОЙ НОВОСТНОЙ КАНАЛ ГОРОДА И МИРА
+  // =========================================================================
+  let lastNewsText = '';
+  function pushNews(category, text, wx = null, wy = null) {
+    if (text === lastNewsText) return;
+    lastNewsText = text;
+    const mins = Math.floor(sim.timeOfDay * 24 * 60);
+    const hh = String(Math.floor(mins / 60) % 24).padStart(2, '0');
+    const mm = String(mins % 60).padStart(2, '0');
+
+    const item = {
+      id: Math.random().toString(36).slice(2),
+      cat: category, // war | crime | disaster | civ
+      time: `${hh}:${mm}`,
+      text,
+      x: wx,
+      y: wy
+    };
+    sim.news.unshift(item);
+    if (sim.news.length > 40) sim.news.pop();
+
+    document.getElementById('ticker-latest').textContent = `[${item.time}] ${text}`;
+    renderNewsList();
+  }
+
+  function renderNewsList() {
+    const list = document.getElementById('news-list');
+    if (!list) return;
+    list.innerHTML = sim.news.map(n => `
+      <div class="news-card ${n.cat}" data-nx="${n.x ?? ''}" data-ny="${n.y ?? ''}">
+        <div class="news-meta">
+          <span>${n.cat === 'war' ? '⚔️ ВОЙНА' : n.cat === 'crime' ? '🚨 КРИМИНАЛ' : n.cat === 'disaster' ? '☄️ ПРОИСШЕСТВИЕ' : '🏙️ ГОРОД'}</span>
+          <span>${n.time}</span>
+        </div>
+        <div class="news-msg">${n.text}</div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.news-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const nx = parseFloat(card.dataset.nx);
+        const ny = parseFloat(card.dataset.ny);
+        if (!Number.isNaN(nx) && !Number.isNaN(ny)) {
+          sim.followSelected = false;
+          sim.cam.x = W * 0.5 - nx * sim.cam.zoom;
+          sim.cam.y = H * 0.5 - ny * sim.cam.zoom;
+          sim.highlightEvent = { x: nx, y: ny, ttl: 90 };
+        }
+      });
+    });
+  }
+
+  // =========================================================================
+  // 5. УТИЛИТЫ КАРТЫ, ПРОВЕРКА ПРОХОДИМОСТИ И СЕТКИ ЗАНЯТОСТИ
+  // =========================================================================
+  function resizeCanvas() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    COLS = Math.max(64, Math.ceil(W / TSIZE) + 8);
+    ROWS = Math.max(44, Math.ceil(H / TSIZE) + 8);
+    terrain = new Uint8Array(COLS * ROWS);
+    variant = new Uint8Array(COLS * ROWS);
+    occupancy = new Uint8Array(COLS * ROWS);
+    territory = new Int8Array(COLS * ROWS);
+    territory.fill(-1);
+  }
+
+  function tileAt(tx, ty) {
+    if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return TILE.DEEP_WATER;
+    return terrain[ty * COLS + tx];
+  }
+
+  function setTile(tx, ty, t) {
+    if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) return;
+    const idx = ty * COLS + tx;
+    terrain[idx] = t;
+    variant[idx] = (Math.random() * 255) | 0;
+  }
+
+  function isWater(t) {
+    return t === TILE.WATER || t === TILE.DEEP_WATER;
+  }
+
+  function isRoad(t) {
+    return t === TILE.ROAD || t === TILE.BRIDGE;
+  }
+
+  function worldToTile(wx, wy) {
+    return { tx: Math.floor(wx / TSIZE), ty: Math.floor(wy / TSIZE) };
+  }
+
+  // Пересчет сетки занятости (дороги + отступ 1 клетка + здания)
+  function rebuildOccupancy() {
+    occupancy.fill(OCC.FREE);
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (isRoad(tileAt(x, y))) {
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const nx = x + dx, ny = y + dy;
+              if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+                occupancy[ny * COLS + nx] = OCC.ROAD_ZONE;
+              }
+            }
+          }
+        }
+      }
+    }
+    sim.buildings.forEach(b => {
+      const x0 = Math.floor((b.x - b.w * 0.5) / TSIZE) - 1;
+      const x1 = Math.floor((b.x + b.w * 0.5) / TSIZE) + 1;
+      const y0 = Math.floor((b.y - b.h * 0.5) / TSIZE) - 1;
+      const y1 = Math.floor((b.y + b.h * 0.5) / TSIZE) + 1;
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+            occupancy[y * COLS + x] = OCC.BUILDING;
+          }
+        }
+      }
+    });
+  }
+
+  // Строгая проверка: можно ли поставить здание в (wx, wy) размером w x h
+  function canPlaceBuildingAt(wx, wy, w, h) {
+    const x0 = Math.floor((wx - w * 0.5) / TSIZE) - 1;
+    const x1 = Math.floor((wx + w * 0.5) / TSIZE) + 1;
+    const y0 = Math.floor((wy - h * 0.5) / TSIZE) - 1;
+    const y1 = Math.floor((wy + h * 0.5) / TSIZE) + 1;
+
+    if (x0 < 2 || x1 >= COLS - 2 || y0 < 2 || y1 >= ROWS - 2) return false;
+
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const t = tileAt(x, y);
+        // Нельзя строить на воде, лаве, скалах и дорогах!
+        if (isWater(t) || t === TILE.LAVA || t === TILE.ROCK || isRoad(t)) return false;
+        // Нельзя строить в буферной зоне дороги или поверх другого здания!
+        if (occupancy[y * COLS + x] !== OCC.FREE) return false;
+      }
+    }
+    return true;
+  }
+
+  // Прокладка дороги строго вдали от существующих зданий
+  function buildCleanRoad(x1, y1, x2, y2) {
+    const steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+    for (let s = 0; s <= steps; s++) {
+      const t = steps === 0 ? 0 : s / steps;
+      const cx = Math.round(x1 + (x2 - x1) * t);
+      const cy = Math.round(y1 + (y2 - y1) * t);
+      if (cx < 2 || cx >= COLS - 2 || cy < 2 || cy >= ROWS - 2) continue;
+      // Проверяем, не задевает ли дорога существующее здание
+      if (occupancy[cy * COLS + cx] === OCC.BUILDING) continue;
+      const cur = tileAt(cx, cy);
+      if (cur === TILE.LAVA || cur === TILE.ROCK) continue;
+      setTile(cx, cy, isWater(cur) ? TILE.BRIDGE : TILE.ROAD);
+    }
+    rebuildOccupancy();
+  }
+
+  // =========================================================================
+  // 6. ДИПЛОМАТИЯ ГОРОДОВ, СТРОИТЕЛЬСТВО И СОЗДАНИЕ СУЩНОСТЕЙ
+  // =========================================================================
+  function warKey(id1, id2) {
+    return id1 < id2 ? `${id1}:${id2}` : `${id2}:${id1}`;
+  }
+
+  function areAtWar(id1, id2) {
+    if (id1 === null || id2 === null || id1 === id2) return false;
+    return sim.wars.has(warKey(id1, id2));
+  }
+
+  function declareWar(c1, c2, silent = false) {
+    if (!c1 || !c2 || c1.id === c2.id) return;
+    const k = warKey(c1.id, c2.id);
+    if (!sim.wars.has(k)) {
+      sim.wars.add(k);
+      if (!silent) {
+        pushNews('war', `Война! Город ${c1.name} объявил войну городу ${c2.name}!`, c1.x, c1.y);
+        sound.thunder();
+      }
+    }
+  }
+
+  function createCity(wx, wy, presetIdx = null) {
+    const idx = presetIdx !== null ? presetIdx : sim.cities.length;
+    const preset = CIV_PRESETS[idx % CIV_PRESETS.length];
+    const city = {
+      id: sim.cities.length,
+      name: idx < CIV_PRESETS.length ? preset.name : `${preset.name}-${idx + 1}`,
+      color: preset.color,
+      light: preset.light,
+      banner: preset.banner,
+      x: wx,
+      y: wy,
+      gold: 250,
+      food: 120,
+      wood: 90,
+      aiTimer: 40
+    };
+    sim.cities.push(city);
+
+    // Ставим ратушу столицы
+    placeBuildingSafe(wx, wy, 'hall', city.id, 3, true);
+    updateTerritories();
+    pushNews('civ', `Основан новый город ${city.name} (${city.banner})!`, wx, wy);
+    return city;
+  }
+
+  function updateTerritories() {
+    territory.fill(-1);
+    if (sim.cities.length === 0) return;
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (isWater(tileAt(x, y))) continue;
+        const wx = x * TSIZE + 8;
+        const wy = y * TSIZE + 8;
+        let bestId = -1, bestD = 260;
+        sim.cities.forEach(c => {
+          const d = Math.hypot(c.x - wx, c.y - wy);
+          if (d < bestD) { bestD = d; bestId = c.id; }
+        });
+        territory[y * COLS + x] = bestId;
+      }
+    }
+  }
+
+  function placeBuildingSafe(wx, wy, kind, cityId, stage = 3, force = false) {
+    const sizes = {
+      hall:     { w: 46, h: 36, label: 'Ратуша' },
+      house:    { w: 34, h: 26, label: 'Жилой дом' },
+      farm:     { w: 42, h: 30, label: 'Ферма' },
+      shop:     { w: 38, h: 28, label: 'Магазин' },
+      hospital: { w: 42, h: 30, label: 'Больница' },
+      barracks: { w: 40, h: 30, label: 'Казарма' }
+    };
+    const spec = sizes[kind] || sizes.house;
+    if (!force && !canPlaceBuildingAt(wx, wy, spec.w, spec.h)) return null;
+
+    const city = sim.cities[cityId] || null;
+    const b = {
+      id: Math.random().toString(36).slice(2),
+      kind,
+      name: city ? `${spec.label} (${city.name})` : spec.label,
+      cityId,
+      x: wx,
+      y: wy,
+      w: spec.w,
+      h: spec.h,
+      hp: kind === 'hall' ? 220 : 100,
+      maxHp: kind === 'hall' ? 220 : 100,
+      fire: 0,
+      stage,
+      roofColor: city ? city.color : '#b91c1c',
+      wallColor: kind === 'hospital' ? '#ffffff' : (kind === 'farm' ? '#fef3c7' : '#f1f5f9')
+    };
+    sim.buildings.push(b);
+    rebuildOccupancy();
+    return b;
+  }
+
+  function spawnHuman(wx, wy, role = 'citizen', cityId = null) {
+    if (cityId === null && sim.cities.length > 0) {
+      const { tx, ty } = worldToTile(wx, wy);
+      const tid = (tx >= 0 && tx < COLS && ty >= 0 && ty < ROWS) ? territory[ty * COLS + tx] : -1;
+      cityId = tid >= 0 ? tid : 0;
+    }
+    const city = cityId !== null ? sim.cities[cityId] : null;
+    const fn = FIRST_NAMES[(Math.random() * FIRST_NAMES.length) | 0];
+    const ln = LAST_NAMES[(Math.random() * LAST_NAMES.length) | 0];
+    const h = {
+      id: Math.random().toString(36).slice(2),
+      name: `${fn} ${ln}`,
+      role, // citizen | builder | farmer | warrior | bandit | police | medic | firefighter
+      cityId,
+      x: wx,
+      y: wy,
+      vx: 0,
+      vy: 0,
+      angle: Math.random() * Math.PI * 2,
+      hp: role === 'warrior' ? 135 : 100,
+      maxHp: role === 'warrior' ? 135 : 100,
+      bleeding: 0,
+      infected: false,
+      wanted: role === 'bandit' ? 60 : 0,
+      money: 25 + ((Math.random() * 60) | 0),
+      hunger: 70 + Math.random() * 30,
+      energy: 70 + Math.random() * 30,
+      stamina: 100,
+      swimming: false,
+      clothColor: role === 'bandit' ? '#18181b' : (role === 'police' ? '#1e3a8a' : (role === 'medic' ? '#f8fafc' : (role === 'firefighter' ? '#dc2626' : (city ? city.color : '#38bdf8')))),
+      skinColor: ['#fed7aa', '#fdba74', '#e0ac69', '#8d5524'][(Math.random() * 4) | 0],
+      actionText: 'Осваивается в городе',
+      targetX: wx,
+      targetY: wy,
+      aiTimer: 15 + ((Math.random() * 45) | 0),
+      attackCooldown: 0,
+      walkPhase: Math.random() * 10
+    };
+    sim.humans.push(h);
+    return h;
+  }
+
+  // Спавн машины строго на ближайшей дорожной клетке с привязкой к полосе
+  function spawnVehicleOnRoad(wx, wy, kind = 'car') {
+    const { tx, ty } = worldToTile(wx, wy);
+    let bestTx = -1, bestTy = -1, bestD = 999;
+    for (let dy = -8; dy <= 8; dy++) {
+      for (let dx = -8; dx <= 8; dx++) {
+        const cx = tx + dx, cy = ty + dy;
+        if (isRoad(tileAt(cx, cy))) {
+          const d = Math.hypot(dx, dy);
+          if (d < bestD) { bestD = d; bestTx = cx; bestTy = cy; }
+        }
+      }
+    }
+    if (bestTx < 0) return null; // без дороги машина не спавнится в поле/воде
+
+    // Выбираем начальное направление вдоль дороги
+    const dirs = [
+      { dx: 1, dy: 0, ang: 0 },
+      { dx: 0, dy: 1, ang: Math.PI / 2 },
+      { dx: -1, dy: 0, ang: Math.PI },
+      { dx: 0, dy: -1, ang: -Math.PI / 2 }
+    ];
+    const validDirs = dirs.filter(d => isRoad(tileAt(bestTx + d.dx, bestTy + d.dy)));
+    const chosen = validDirs.length ? validDirs[(Math.random() * validDirs.length) | 0] : dirs[0];
+
+    const names = {
+      car: 'Легковой автомобиль',
+      police: 'Полицейский патруль',
+      ambulance: 'Скорая помощь',
+      firetruck: 'Пожарная машина'
+    };
+    const colors = {
+      car: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#e2e8f0', '#8b5cf6'][(Math.random() * 6) | 0],
+      police: '#1e293b',
+      ambulance: '#ffffff',
+      firetruck: '#dc2626'
+    };
+
+    // Смещение на правую полосу движения (3.2 px вправо от оси дороги)
+    const laneOffset = 3.2;
+    const perpX = -Math.sin(chosen.ang) * laneOffset;
+    const perpY = Math.cos(chosen.ang) * laneOffset;
+
+    const v = {
+      id: Math.random().toString(36).slice(2),
+      kind, // car | police | ambulance | firetruck
+      name: names[kind] || 'Автомобиль',
+      x: bestTx * TSIZE + 8 + perpX,
+      y: bestTy * TSIZE + 8 + perpY,
+      tileX: bestTx,
+      tileY: bestTy,
+      dirIdx: dirs.indexOf(chosen),
+      angle: chosen.ang,
+      speed: 0,
+      maxSpeed: kind === 'car' ? 1.45 : 1.75,
+      w: kind === 'firetruck' ? 24 : 20,
+      h: 11,
+      color: colors[kind],
+      hp: 100,
+      maxHp: 100,
+      fire: 0,
+      sunken: false,
+      hijacked: false,
+      siren: kind !== 'car',
+      actionText: 'Движется по дорожной сети'
+    };
+    sim.vehicles.push(v);
+    return v;
+  }
+
+  function spawnAnimal(wx, wy, kind = 'deer') {
+    sim.animals.push({
+      id: Math.random().toString(36).slice(2),
+      kind, // deer | wolf | bird | fish
+      name: kind === 'wolf' ? 'Волк' : (kind === 'deer' ? 'Олень' : (kind === 'bird' ? 'Птица' : 'Рыба')),
+      x: wx,
+      y: wy,
+      angle: Math.random() * Math.PI * 2,
+      hp: kind === 'wolf' ? 85 : 55,
+      maxHp: kind === 'wolf' ? 85 : 55,
+      bleeding: 0,
+      anim: Math.random() * 10
+    });
+  }
+
+  function spawnTree(wx, wy) {
+    const { tx, ty } = worldToTile(wx, wy);
+    if (occupancy[ty * COLS + tx] !== OCC.FREE || isWater(tileAt(tx, ty))) return;
+    sim.trees.push({
+      x: wx,
+      y: wy,
+      r: 8 + Math.random() * 5,
+      hp: 45,
+      fire: 0
+    });
+  }
+
+  function addBlood(wx, wy, r = 5, alpha = 0.85) {
+    if (sim.bloodStains.length > 450) sim.bloodStains.shift();
+    const { tx, ty } = worldToTile(wx, wy);
+    sim.bloodStains.push({
+      x: wx + (Math.random() - 0.5) * 4,
+      y: wy + (Math.random() - 0.5) * 4,
+      r: r * (0.7 + Math.random() * 0.5),
+      alpha,
+      inWater: isWater(tileAt(tx, ty))
+    });
+  }
+
+  function bleedSplash(wx, wy, count = 8) {
+    addBlood(wx, wy, 4.5 + count * 0.4, 0.9);
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 0.6 + Math.random() * 2.2;
+      sim.particles.push({
+        x: wx, y: wy,
+        vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+        life: 16 + ((Math.random() * 12) | 0),
+        color: i % 2 === 0 ? '#dc2626' : '#991b1b',
+        size: 2.4
+      });
+    }
+  }
+
+  // =========================================================================
+  // 7. ГЕНЕРАЦИЯ СЦЕНАРИЕВ МИРА
+  // =========================================================================
+  function generateWorld(scenario) {
+    sim.biome = scenario;
+    sim.cities = [];
+    sim.wars.clear();
+    sim.buildings = [];
+    sim.trees = [];
+    sim.humans = [];
+    sim.vehicles = [];
+    sim.animals = [];
+    sim.bloodStains = [];
+    sim.particles = [];
+    sim.meteors = [];
+    sim.bolts = [];
+    sim.clouds = [];
+    sim.tornadoes = [];
+    sim.shockwaves = [];
+    sim.news = [];
+    sim.selected = null;
+    sim.followSelected = false;
+    document.getElementById('sims-inspector').classList.remove('open');
+
+    const seed = Math.random() * 100;
+
+    // 1. Ландшафт
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const nx = (x / COLS) * 2 - 1;
+        const ny = (y / ROWS) * 2 - 1;
+        const n = Math.sin(x * 0.13 + seed) * 0.2 + Math.cos(y * 0.13 - seed) * 0.2;
+
+        if (scenario === 'twin_cities') {
+          // Два берега и судоходная река посередине
+          const river = Math.sin(y * 0.14 + seed) * 0.08;
+          if (Math.abs(nx - river) < 0.07) setTile(x, y, TILE.DEEP_WATER);
+          else if (Math.abs(nx - river) < 0.11) setTile(x, y, TILE.WATER);
+          else if (Math.abs(nx - river) < 0.15) setTile(x, y, TILE.SAND);
+          else if (Math.abs(ny) > 0.88 && n > 0.15) setTile(x, y, TILE.ROCK);
+          else setTile(x, y, TILE.GRASS);
+        } else if (scenario === 'archipelago') {
+          const d1 = Math.hypot(nx + 0.45, ny + 0.25);
+          const d2 = Math.hypot(nx - 0.45, ny + 0.25);
+          const d3 = Math.hypot(nx + 0.42, ny - 0.32);
+          const d4 = Math.hypot(nx - 0.42, ny - 0.32);
+          const best = Math.min(d1, d2, d3, d4) + n * 0.12;
+          if (best > 0.44) setTile(x, y, TILE.DEEP_WATER);
+          else if (best > 0.36) setTile(x, y, TILE.WATER);
+          else if (best > 0.31) setTile(x, y, TILE.SAND);
+          else setTile(x, y, TILE.GRASS);
+        } else if (scenario === 'frontier') {
+          const lake = Math.hypot(nx, ny) < 0.22 + n * 0.08;
+          if (lake) setTile(x, y, TILE.WATER);
+          else if (Math.hypot(nx, ny) < 0.27) setTile(x, y, TILE.SAND);
+          else if (n > 0.34) setTile(x, y, TILE.ROCK);
+          else setTile(x, y, TILE.GRASS);
+        } else {
+          // Постапокалипсис
+          if (Math.abs(nx) > 0.86 || Math.abs(ny) > 0.86) setTile(x, y, TILE.WATER);
+          else if (n > 0.25) setTile(x, y, TILE.SCORCHED);
+          else if (n < -0.25) setTile(x, y, TILE.SAND);
+          else setTile(x, y, TILE.GRASS);
+        }
+      }
+    }
+
+    rebuildOccupancy();
+
+    // 2. Города, дорожная сеть, кварталы, службы и армии
+    if (scenario === 'twin_cities') {
+      const cA = createCity(COLS * 0.24 * TSIZE, ROWS * 0.48 * TSIZE, 0);
+      const cB = createCity(COLS * 0.76 * TSIZE, ROWS * 0.48 * TSIZE, 1);
+
+      // Дорожная сеть Левого города (Аурелия)
+      const lx1 = Math.floor(COLS * 0.14), lx2 = Math.floor(COLS * 0.34);
+      const ly1 = Math.floor(ROWS * 0.26), ly2 = Math.floor(ROWS * 0.72);
+      buildCleanRoad(lx1, ly1, lx2, ly1);
+      buildCleanRoad(lx1, ly2, lx2, ly2);
+      buildCleanRoad(lx1, ly1, lx1, ly2);
+      buildCleanRoad(lx2, ly1, lx2, ly2);
+
+      // Дорожная сеть Правого города (Валдар)
+      const rx1 = Math.floor(COLS * 0.66), rx2 = Math.floor(COLS * 0.86);
+      buildCleanRoad(rx1, ly1, rx2, ly1);
+      buildCleanRoad(rx1, ly2, rx2, ly2);
+      buildCleanRoad(rx1, ly1, rx1, ly2);
+      buildCleanRoad(rx2, ly1, rx2, ly2);
+
+      // Два моста через реку, соединяющие города!
+      buildCleanRoad(lx2, ly1, rx1, ly1);
+      buildCleanRoad(lx2, ly2, rx1, ly2);
+
+      // Застройка строго на свободных участках (canPlaceBuildingAt гарантирует чистоту дорог)
+      [cA, cB].forEach((city, idx) => {
+        const baseX = idx === 0 ? lx1 + 4 : rx1 + 4;
+        const types = ['house', 'farm', 'shop', 'hospital', 'barracks', 'house'];
+        types.forEach((tp, k) => {
+          const bx = (baseX + (k % 3) * 5) * TSIZE;
+          const by = (ly1 + 5 + Math.floor(k / 3) * 12) * TSIZE;
+          placeBuildingSafe(bx, by, tp, city.id, 3, false);
+        });
+
+        const roles = ['citizen', 'citizen', 'builder', 'farmer', 'warrior', 'warrior', 'police', 'medic', 'firefighter'];
+        roles.forEach((r, k) => {
+          spawnHuman(city.x + (k - 4) * 14, city.y + 34, r, city.id);
+        });
+      });
+
+      // Машины на дорогах
+      spawnVehicleOnRoad(lx1 * TSIZE, ly1 * TSIZE, 'car');
+      spawnVehicleOnRoad(lx2 * TSIZE, ly2 * TSIZE, 'police');
+      spawnVehicleOnRoad(rx1 * TSIZE, ly1 * TSIZE, 'car');
+      spawnVehicleOnRoad(rx2 * TSIZE, ly2 * TSIZE, 'ambulance');
+      spawnVehicleOnRoad(lx1 * TSIZE, ly2 * TSIZE, 'firetruck');
+
+      // Пара бандитов на окраине
+      spawnHuman(COLS * 0.48 * TSIZE, ROWS * 0.16 * TSIZE, 'bandit', null);
+      spawnHuman(COLS * 0.52 * TSIZE, ROWS * 0.84 * TSIZE, 'bandit', null);
+    } else if (scenario === 'archipelago') {
+      const coords = [
+        [0.27, 0.34], [0.73, 0.34], [0.29, 0.68], [0.71, 0.68]
+      ];
+      coords.forEach(([fx, fy], idx) => {
+        const c = createCity(COLS * fx * TSIZE, ROWS * fy * TSIZE, idx);
+        const tx = Math.floor(COLS * fx), ty = Math.floor(ROWS * fy);
+        buildCleanRoad(tx - 5, ty + 4, tx + 5, ty + 4);
+        placeBuildingSafe((tx - 4) * TSIZE, (ty - 4) * TSIZE, 'house', c.id, 3);
+        placeBuildingSafe((tx + 4) * TSIZE, (ty - 4) * TSIZE, 'farm', c.id, 3);
+        ['citizen', 'builder', 'farmer', 'warrior', 'warrior'].forEach((r, k) => {
+          spawnHuman(c.x + (k - 2) * 12, c.y + 24, r, c.id);
+        });
+      });
+    } else if (scenario === 'frontier') {
+      const c = createCity(COLS * 0.25 * TSIZE, ROWS * 0.5 * TSIZE, 0);
+      ['citizen', 'citizen', 'builder', 'builder', 'farmer', 'warrior'].forEach((r, k) => {
+        spawnHuman(c.x + (k - 2) * 14, c.y + 28, r, c.id);
+      });
+    } else {
+      const c = createCity(COLS * 0.5 * TSIZE, ROWS * 0.5 * TSIZE, 2);
+      const cx = Math.floor(COLS * 0.5), cy = Math.floor(ROWS * 0.5);
+      buildCleanRoad(cx - 12, cy + 5, cx + 12, cy + 5);
+      placeBuildingSafe((cx - 6) * TSIZE, (cy - 4) * TSIZE, 'barracks', c.id, 3);
+      placeBuildingSafe((cx + 6) * TSIZE, (cy - 4) * TSIZE, 'hospital', c.id, 3);
+      ['warrior', 'warrior', 'police', 'medic', 'builder', 'citizen'].forEach((r, k) => {
+        spawnHuman(c.x + (k - 2) * 14, c.y + 25, r, c.id);
+      });
+      spawnVehicleOnRoad(cx * TSIZE, (cy + 5) * TSIZE, 'police');
+      for (let i = 0; i < 6; i++) {
+        spawnHuman((12 + i * 12) * TSIZE, 14 * TSIZE, 'bandit', null);
+      }
+    }
+
+    // Деревья, звери и рыбы
+    for (let i = 0; i < 36; i++) {
+      const tx = Math.floor(Math.random() * COLS);
+      const ty = Math.floor(Math.random() * ROWS);
+      if (tileAt(tx, ty) === TILE.GRASS) spawnTree(tx * TSIZE + 8, ty * TSIZE + 8);
+    }
+    for (let i = 0; i < 8; i++) {
+      const tx = Math.floor(Math.random() * COLS);
+      const ty = Math.floor(Math.random() * ROWS);
+      if (tileAt(tx, ty) === TILE.GRASS) spawnAnimal(tx * TSIZE, ty * TSIZE, i < 6 ? 'deer' : 'wolf');
+    }
+    for (let i = 0; i < 8; i++) spawnAnimal(Math.random() * W, Math.random() * H, 'bird');
+    for (let i = 0; i < 12; i++) {
+      const tx = Math.floor(Math.random() * COLS);
+      const ty = Math.floor(Math.random() * ROWS);
+      if (isWater(tileAt(tx, ty))) spawnAnimal(tx * TSIZE, ty * TSIZE, 'fish');
+    }
+
+    pushNews('civ', `Мир «${document.getElementById('biome-select').selectedOptions[0].text}» создан. Городов: ${sim.cities.length}.`, W * 0.5, H * 0.5);
+  }
+
+  // =========================================================================
+  // 8. УМНОЕ ДВИЖЕНИЕ МАШИН ПО ДОРОЖНОЙ СЕТИ (БЕЗ ЗАСТРЕВАНИЙ И ВОДЫ)
+  // =========================================================================
+  const ROAD_DIRS = [
+    { dx: 1, dy: 0, ang: 0 },
+    { dx: 0, dy: 1, ang: Math.PI / 2 },
+    { dx: -1, dy: 0, ang: Math.PI },
+    { dx: 0, dy: -1, ang: -Math.PI / 2 }
+  ];
+
+  function updateVehicles() {
+    for (let i = sim.vehicles.length - 1; i >= 0; i--) {
+      const v = sim.vehicles[i];
+
+      if (v.fire > 0) {
+        v.hp -= 0.15;
+        if (sim.tick % 5 === 0) {
+          sim.particles.push({ x: v.x, y: v.y, vx: (Math.random() - 0.5) * 0.5, vy: -0.9, life: 16, color: '#f97316', size: 4 });
+        }
+      }
+
+      if (v.hp <= 0) {
+        sim.shockwaves.push({ x: v.x, y: v.y, r: 4, maxR: 50, alpha: 0.9 });
+        sound.explosion();
+        pushNews('disaster', `Взрыв автомобиля (${v.name}) на трассе!`, v.x, v.y);
+        sim.humans.forEach(h => { if (Math.hypot(h.x - v.x, h.y - v.y) < 42) damageHuman(h, 55, 'взрыв авто'); });
+        if (sim.selected && sim.selected.ref === v) {
+          sim.selected = null;
+          document.getElementById('sims-inspector').classList.remove('open');
+        }
+        sim.vehicles.splice(i, 1);
+        continue;
+      }
+
+      const { tx, ty } = worldToTile(v.x, v.y);
+      const tHere = tileAt(tx, ty);
+
+      // В глубокой воде машина тонет и не ездит!
+      if (isWater(tHere)) {
+        v.sunken = true;
+        v.speed = 0;
+        v.hp -= 0.4;
+        v.actionText = 'Затонул в воде!';
+        continue;
+      }
+
+      // Если дорога под машиной была разрушена метеоритом/лавой — машина останавливается
+      if (!isRoad(tHere)) {
+        v.speed *= 0.85;
+        v.actionText = 'Дорога разрушена — движение невозможно';
+        continue;
+      }
+
+      // Определяем текущую клетку дороги и выбираем следующую клетку по графу дорог
+      const dir = ROAD_DIRS[v.dirIdx];
+      const cellCenterX = v.tileX * TSIZE + 8;
+      const cellCenterY = v.tileY * TSIZE + 8;
+      const laneOffset = 3.2; // правостороннее движение
+      const targetX = cellCenterX - Math.sin(dir.ang) * laneOffset;
+      const targetY = cellCenterY + Math.cos(dir.ang) * laneOffset;
+
+      const distToTarget = Math.hypot(targetX - v.x, targetY - v.y);
+      if (distToTarget < 3.2) {
+        // Выбираем следующую дорожную клетку (предпочитаем ехать прямо или повернуть, разворот только в тупике)
+        const reverseIdx = (v.dirIdx + 2) % 4;
+        const options = [];
+        for (let d = 0; d < 4; d++) {
+          if (d === reverseIdx) continue;
+          const nx = v.tileX + ROAD_DIRS[d].dx;
+          const ny = v.tileY + ROAD_DIRS[d].dy;
+          if (isRoad(tileAt(nx, ny))) {
+            options.push({ d, nx, ny, straight: d === v.dirIdx });
+          }
+        }
+
+        let nextStep = null;
+        if (options.length > 0) {
+          // Умный выбор направления для спецслужб (едут в сторону вызова!)
+          let goalX = null, goalY = null;
+          if (v.kind === 'police') {
+            const crim = sim.humans.find(h => h.wanted > 0);
+            if (crim) { goalX = crim.x; goalY = crim.y; v.actionText = `Погоня за ${crim.name}`; }
+          } else if (v.kind === 'ambulance') {
+            const inj = sim.humans.find(h => h.hp < 75 || h.bleeding > 5);
+            if (inj) { goalX = inj.x; goalY = inj.y; v.actionText = `Спешит на вызов к ${inj.name}`; }
+          } else if (v.kind === 'firetruck') {
+            const fireB = sim.buildings.find(b => b.fire > 0);
+            if (fireB) { goalX = fireB.x; goalY = fireB.y; v.actionText = `Едет тушить ${fireB.name}`; }
+          }
+
+          if (goalX !== null) {
+            options.sort((a, b) => Math.hypot(a.nx * TSIZE - goalX, a.ny * TSIZE - goalY) - Math.hypot(b.nx * TSIZE - goalX, b.ny * TSIZE - goalY));
+            nextStep = options[0];
+          } else {
+            const straightOpt = options.find(o => o.straight);
+            if (straightOpt && (options.length === 1 || Math.random() < 0.72)) {
+              nextStep = straightOpt;
+            } else {
+              nextStep = options[(Math.random() * options.length) | 0];
+            }
+          }
+        } else {
+          // Тупик — разворот на 180°
+          const rx = v.tileX + ROAD_DIRS[reverseIdx].dx;
+          const ry = v.tileY + ROAD_DIRS[reverseIdx].dy;
+          if (isRoad(tileAt(rx, ry))) {
+            nextStep = { d: reverseIdx, nx: rx, ny: ry };
+          }
+        }
+
+        if (nextStep) {
+          v.dirIdx = nextStep.d;
+          v.tileX = nextStep.nx;
+          v.tileY = nextStep.ny;
+        } else {
+          v.speed = 0;
+          continue;
+        }
+      }
+
+      // Проверка дистанции до впереди идущей машины и пешеходов (чтобы не было кучи-малы!)
+      const desiredAng = ROAD_DIRS[v.dirIdx].ang;
+      let diff = desiredAng - v.angle;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      v.angle += diff * 0.25;
+
+      const frontX = v.x + Math.cos(v.angle) * 20;
+      const frontY = v.y + Math.sin(v.angle) * 20;
+      const carAhead = sim.vehicles.some(o => o !== v && Math.hypot(o.x - frontX, o.y - frontY) < 17);
+      const pedAhead = sim.humans.some(h => Math.hypot(h.x - frontX, h.y - frontY) < 12);
+
+      if (pedAhead && !v.hijacked) {
+        sound.horn();
+      }
+
+      const targetSpd = carAhead ? 0 : (pedAhead && !v.hijacked ? 0.25 : (v.hijacked ? v.maxSpeed * 1.35 : v.maxSpeed));
+      v.speed += (targetSpd - v.speed) * 0.15;
+
+      v.x += Math.cos(v.angle) * v.speed;
+      v.y += Math.sin(v.angle) * v.speed;
+
+      // Работа спецтехники в радиусе действия
+      if (v.kind === 'firetruck') {
+        sim.buildings.forEach(b => {
+          if (b.fire > 0 && Math.hypot(b.x - v.x, b.y - v.y) < 68) {
+            b.fire = Math.max(0, b.fire - 2.5);
+            sim.particles.push({ x: v.x, y: v.y, vx: (b.x - v.x) * 0.12, vy: (b.y - v.y) * 0.12, life: 11, color: '#38bdf8', size: 3.5 });
+            if (b.fire === 0) pushNews('civ', `Пожарные потушили возгорание в ${b.name}!`, b.x, b.y);
+          }
+        });
+      } else if (v.kind === 'ambulance') {
+        sim.humans.forEach(h => {
+          if ((h.hp < 95 || h.bleeding > 0 || h.infected) && Math.hypot(h.x - v.x, h.y - v.y) < 48) {
+            h.hp = Math.min(h.maxHp, h.hp + 1.8);
+            h.bleeding = Math.max(0, h.bleeding - 3.5);
+            h.infected = false;
+          }
+        });
+      } else if (v.kind === 'police') {
+        sound.siren();
+      }
+
+      // ДТП при высокой скорости (особенно при угоне бандитом)
+      if (v.speed > 1.35) {
+        sim.humans.forEach(h => {
+          if (Math.hypot(h.x - v.x, h.y - v.y) < 10) {
+            damageHuman(h, Math.round(v.speed * 22), 'ДТП на дороге');
+            sound.crash();
+            pushNews('disaster', `ДТП: автомобиль сбил жителя ${h.name}!`, v.x, v.y);
+            v.speed = 0;
+          }
+        });
+      }
+    }
+  }
+
+  // =========================================================================
+  // 9. ИНТЕЛЛЕКТ ЖИТЕЛЕЙ, ВОЙНЫ, ПРЕСТУПЛЕНИЯ, СТРОЙКА И ГОРОДА
+  // =========================================================================
+  function damageHuman(h, dmg, cause = 'ранение') {
+    if (h.hp <= 0) return;
+    h.hp = Math.max(0, h.hp - dmg);
+    if (dmg >= 6) {
+      h.bleeding = Math.min(100, h.bleeding + dmg * 1.4);
+      bleedSplash(h.x, h.y, Math.min(12, Math.ceil(dmg / 5)));
+    }
+    h.actionText = `Ранен (${cause})`;
+  }
+
+  function updateCitiesAI() {
+    if (sim.tick % 90 !== 0) return;
+    sim.cities.forEach(city => {
+      const citizens = sim.humans.filter(h => h.cityId === city.id);
+      const cityBlds = sim.buildings.filter(b => b.cityId === city.id);
+
+      // Доход от ферм и магазинов
+      const farms = cityBlds.filter(b => b.kind === 'farm').length;
+      const shops = cityBlds.filter(b => b.kind === 'shop').length;
+      city.food += farms * 6;
+      city.gold += shops * 8 + citizens.length;
+
+      // Автоматический прирост населения при наличии еды и домов
+      if (city.food > 40 && citizens.length < cityBlds.length * 4 + 4) {
+        city.food -= 25;
+        const roles = ['citizen', 'builder', 'farmer', 'warrior', 'police', 'medic'];
+        const role = roles[(Math.random() * roles.length) | 0];
+        spawnHuman(city.x + (Math.random() - 0.5) * 24, city.y + 20, role, city.id);
+      }
+
+      // Случайное дипломатическое напряжение между городами
+      if (sim.cities.length > 1 && Math.random() < 0.06) {
+        const other = sim.cities[(Math.random() * sim.cities.length) | 0];
+        if (other && other.id !== city.id && !areAtWar(city.id, other.id)) {
+          declareWar(city, other);
+        }
+      }
+    });
+  }
+
+  function updateHumans() {
+    for (let i = sim.humans.length - 1; i >= 0; i--) {
+      const h = sim.humans[i];
+      h.walkPhase += 0.22;
+      if (h.attackCooldown > 0) h.attackCooldown--;
+
+      // Кровотечение и инфекция
+      if (h.bleeding > 0) {
+        h.hp -= h.bleeding * 0.0028;
+        h.bleeding = Math.max(0, h.bleeding - 0.04);
+        if (sim.tick % 14 === 0) addBlood(h.x, h.y + 4, 3, 0.75);
+      }
+      if (h.infected) {
+        h.hp -= 0.035;
+        if (sim.tick % 25 === 0) {
+          sim.humans.forEach(o => {
+            if (o !== h && !o.infected && Math.hypot(o.x - h.x, o.y - h.y) < 18) o.infected = true;
+          });
+        }
+      }
+
+      if (h.hp <= 0) {
+        bleedSplash(h.x, h.y, 14);
+        if (h.role === 'bandit') {
+          pushNews('crime', `Преступник ${h.name} нейтрализован!`, h.x, h.y);
+        }
+        if (sim.selected && sim.selected.ref === h) {
+          sim.selected = null;
+          document.getElementById('sims-inspector').classList.remove('open');
+        }
+        sim.humans.splice(i, 1);
+        continue;
+      }
+
+      // Строгая физика воды и лавы: люди НЕ ходят по воде, а плывут!
+      const { tx, ty } = worldToTile(h.x, h.y);
+      const tUnder = tileAt(tx, ty);
+      if (tUnder === TILE.LAVA) damageHuman(h, 5, 'лава');
+
+      if (isWater(tUnder)) {
+        h.swimming = true;
+        h.stamina = Math.max(0, h.stamina - 0.16);
+        h.actionText = 'Плывет к берегу';
+        if (h.stamina <= 0) damageHuman(h, 0.6, 'утопление');
+      } else {
+        h.swimming = false;
+        h.stamina = Math.min(100, h.stamina + 0.4);
+      }
+
+      // ИИ действий по ролям (Войны, Преступления, Полиция, Стройка, Фермерство)
+      h.aiTimer--;
+      if (h.aiTimer <= 0) {
+        h.aiTimer = 30 + ((Math.random() * 55) | 0);
+
+        // А. ВОИН: ищет вражеских воинов, граждан или вражескую ратушу/здания
+        if (h.role === 'warrior') {
+          const enemy = sim.humans.find(o => o.hp > 0 && (o.role === 'bandit' || areAtWar(h.cityId, o.cityId)));
+          if (enemy) {
+            h.targetX = enemy.x;
+            h.targetY = enemy.y;
+            h.actionText = `В бою против ${enemy.name}`;
+          } else {
+            const enemyBld = sim.buildings.find(b => areAtWar(h.cityId, b.cityId));
+            if (enemyBld) {
+              h.targetX = enemyBld.x;
+              h.targetY = enemyBld.y + enemyBld.h * 0.6;
+              h.actionText = `Штурмует ${enemyBld.name}`;
+            }
+          }
+        }
+        // Б. БАНДИТ / ПРЕСТУПНИК: грабит людей/магазины или угоняет машину
+        else if (h.role === 'bandit') {
+          const copNear = sim.humans.find(o => o.role === 'police' && Math.hypot(o.x - h.x, o.y - h.y) < 75);
+          if (copNear) {
+            // Убегает от полиции
+            const esc = Math.atan2(h.y - copNear.y, h.x - copNear.x);
+            h.targetX = h.x + Math.cos(esc) * 90;
+            h.targetY = h.y + Math.sin(esc) * 90;
+            h.actionText = 'Уходит от полицейской погони!';
+          } else {
+            const victim = sim.humans.find(o => o.role !== 'bandit' && o.role !== 'warrior' && o.role !== 'police' && Math.hypot(o.x - h.x, o.y - h.y) < 120);
+            if (victim) {
+              h.targetX = victim.x;
+              h.targetY = victim.y;
+              h.actionText = `Грабит жителя ${victim.name}`;
+            } else {
+              const targetShop = sim.buildings.find(b => b.kind === 'shop' || b.kind === 'house');
+              if (targetShop) {
+                h.targetX = targetShop.x;
+                h.targetY = targetShop.y + 18;
+                h.actionText = `Крадется к ${targetShop.name}`;
+              }
+            }
+          }
+        }
+        // В. ПОЛИЦЕЙСКИЙ: ищет и задерживает преступников
+        else if (h.role === 'police') {
+          const crim = sim.humans.find(o => o.wanted > 0 || o.role === 'bandit');
+          if (crim) {
+            h.targetX = crim.x;
+            h.targetY = crim.y;
+            h.actionText = `Преследует преступника ${crim.name}`;
+          }
+        }
+        // Г. ВРАЧ: лечит раненых и зараженных
+        else if (h.role === 'medic') {
+          const patient = sim.humans.find(o => o !== h && (o.hp < 85 || o.bleeding > 3 || o.infected));
+          if (patient) {
+            h.targetX = patient.x;
+            h.targetY = patient.y;
+            h.actionText = `Оказывает помощь ${patient.name}`;
+          }
+        }
+        // Д. ПОЖАРНЫЙ: тушит горящие дома и деревья
+        else if (h.role === 'firefighter') {
+          const fireB = sim.buildings.find(b => b.fire > 0);
+          if (fireB) {
+            h.targetX = fireB.x;
+            h.targetY = fireB.y + 20;
+            h.actionText = `Тушит пожар: ${fireB.name}`;
+          }
+        }
+        // Е. СТРОИТЕЛЬ: строит новые дома/фермы строго вне дорог и чинит поврежденные
+        else if (h.role === 'builder' && h.cityId !== null) {
+          const damaged = sim.buildings.find(b => b.cityId === h.cityId && b.hp < b.maxHp);
+          if (damaged) {
+            h.targetX = damaged.x;
+            h.targetY = damaged.y + 18;
+            h.actionText = `Ремонтирует ${damaged.name}`;
+          } else if (sim.buildings.filter(b => b.cityId === h.cityId).length < 16) {
+            const city = sim.cities[h.cityId];
+            if (city) {
+              for (let attempt = 0; attempt < 10; attempt++) {
+                const bx = city.x + (Math.random() - 0.5) * 210;
+                const by = city.y + (Math.random() - 0.5) * 210;
+                const kind = Math.random() < 0.35 ? 'farm' : (Math.random() < 0.25 ? 'shop' : 'house');
+                const placed = placeBuildingSafe(bx, by, kind, h.cityId, 1, false);
+                if (placed) {
+                  h.targetX = placed.x;
+                  h.targetY = placed.y + 18;
+                  h.actionText = `Строит: ${placed.name}`;
+                  sound.build();
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // Если нет срочной задачи — прогулка по суше или возврат из воды на берег
+        if (h.swimming) {
+          for (let rad = 2; rad <= 16; rad += 2) {
+            let found = false;
+            for (let a = 0; a < 8; a++) {
+              const ang = (a / 8) * Math.PI * 2;
+              const sx = tx + Math.round(Math.cos(ang) * rad);
+              const sy = ty + Math.round(Math.sin(ang) * rad);
+              if (!isWater(tileAt(sx, sy)) && tileAt(sx, sy) !== TILE.ROCK) {
+                h.targetX = sx * TSIZE + 8;
+                h.targetY = sy * TSIZE + 8;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+        } else if (Math.random() < 0.35) {
+          const ang = Math.random() * Math.PI * 2;
+          const dist = 28 + Math.random() * 65;
+          const nx = Math.max(20, Math.min(COLS * TSIZE - 20, h.x + Math.cos(ang) * dist));
+          const ny = Math.max(20, Math.min(ROWS * TSIZE - 20, h.y + Math.sin(ang) * dist));
+          const nt = worldToTile(nx, ny);
+          if (!isWater(tileAt(nt.tx, nt.ty)) && tileAt(nt.tx, nt.ty) !== TILE.ROCK) {
+            h.targetX = nx;
+            h.targetY = ny;
+          }
+        }
+      }
+
+      // Ближний бой, аресты, грабежи, лечение и ремонт
+      sim.humans.forEach(o => {
+        if (o === h || o.hp <= 0) return;
+        const d = Math.hypot(o.x - h.x, o.y - h.y);
+        if (d > 16) return;
+
+        // Бой воинов и полиции
+        if ((h.role === 'warrior' && (o.role === 'bandit' || areAtWar(h.cityId, o.cityId))) ||
+            (h.role === 'police' && (o.wanted > 0 || o.role === 'bandit'))) {
+          if (h.attackCooldown === 0) {
+            h.attackCooldown = 26;
+            damageHuman(o, h.role === 'warrior' ? 24 : 20, h.role === 'police' ? 'задержание полицией' : 'удар мечом');
+            sound.sword();
+          }
+        }
+        // Грабеж бандитом
+        else if (h.role === 'bandit' && o.role !== 'bandit' && h.attackCooldown === 0) {
+          h.attackCooldown = 45;
+          h.wanted = 100;
+          const stolen = Math.min(o.money, 15);
+          o.money -= stolen;
+          h.money += stolen;
+          damageHuman(o, 14, 'разбойное нападение');
+          pushNews('crime', `Ограбление! Бандит ${h.name} напал на ${o.name}!`, h.x, h.y);
+        }
+        // Лечение врачом
+        else if (h.role === 'medic' && (o.hp < 95 || o.bleeding > 0 || o.infected)) {
+          o.hp = Math.min(o.maxHp, o.hp + 1.5);
+          o.bleeding = Math.max(0, o.bleeding - 3);
+          o.infected = false;
+        }
+      });
+
+      // Взаимодействие со зданиями (штурм вражеских зданий, ремонт, тушение, ограбление)
+      sim.buildings.forEach(b => {
+        const d = Math.hypot(b.x - h.x, b.y - h.y);
+        if (d > 34) return;
+        if (h.role === 'warrior' && areAtWar(h.cityId, b.cityId) && h.attackCooldown === 0) {
+          h.attackCooldown = 30;
+          b.hp -= 18;
+          b.fire = Math.min(100, b.fire + 20);
+          sound.sword();
+        } else if (h.role === 'builder' && b.cityId === h.cityId) {
+          if (b.hp < b.maxHp) b.hp = Math.min(b.maxHp, b.hp + 0.8);
+          if (b.stage < 3 && sim.tick % 40 === 0) b.stage++;
+        } else if (h.role === 'firefighter' && b.fire > 0) {
+          b.fire = Math.max(0, b.fire - 2.2);
+        } else if (h.role === 'bandit' && (b.kind === 'shop' || b.kind === 'house') && h.attackCooldown === 0) {
+          h.attackCooldown = 80;
+          h.wanted = 100;
+          b.fire = 35;
+          pushNews('crime', `Преступник ${h.name} ограбил и поджег ${b.name}!`, b.x, b.y);
+        }
+      });
+
+      // Движение к цели
+      const dx = h.targetX - h.x;
+      const dy = h.targetY - h.y;
+      const dist = Math.hypot(dx, dy);
+      const spd = h.swimming ? 0.5 : (h.bleeding > 25 ? 0.6 : (h.role === 'police' || h.role === 'bandit' ? 1.15 : 0.95));
+
+      if (dist > 3) {
+        h.angle = Math.atan2(dy, dx);
+        const sx = Math.cos(h.angle) * spd;
+        const sy = Math.sin(h.angle) * spd;
+        const nextTile = worldToTile(h.x + sx * 4, h.y + sy * 4);
+        const nt = tileAt(nextTile.tx, nextTile.ty);
+        if (!h.swimming && (isWater(nt) || nt === TILE.ROCK)) {
+          h.targetX = h.x - sx * 25;
+          h.targetY = h.y - sy * 25;
+        } else {
+          h.x += sx;
+          h.y += sy;
+        }
+      }
+
+      h.x = Math.max(12, Math.min(COLS * TSIZE - 12, h.x + h.vx));
+      h.y = Math.max(12, Math.min(ROWS * TSIZE - 12, h.y + h.vy));
+      h.vx *= 0.85;
+      h.vy *= 0.85;
+    }
+  }
+
+  function updateBuildingsAndNature() {
+    // Здания (разрушение и захват столицы)
+    for (let i = sim.buildings.length - 1; i >= 0; i--) {
+      const b = sim.buildings[i];
+      if (b.fire > 0) {
+        b.hp -= 0.14;
+        if (sim.tick % 5 === 0) {
+          sim.particles.push({ x: b.x + (Math.random() - 0.5) * b.w * 0.7, y: b.y, vx: 0, vy: -1.1, life: 18, color: '#f97316', size: 4.5 });
+        }
+      }
+      if (b.hp <= 0) {
+        if (b.kind === 'hall') {
+          pushNews('war', `Столичная ратуша ${b.name} разрушена до основания!`, b.x, b.y);
+        }
+        sim.buildings.splice(i, 1);
+        rebuildOccupancy();
+      }
+    }
+
+    // Деревья
+    for (let i = sim.trees.length - 1; i >= 0; i--) {
+      const tr = sim.trees[i];
+      if (tr.fire > 0) {
+        tr.hp -= 0.22;
+        if (sim.tick % 6 === 0) {
+          sim.particles.push({ x: tr.x, y: tr.y - 4, vx: 0, vy: -1, life: 16, color: '#fb923c', size: 3.5 });
+        }
+      }
+      if (tr.hp <= 0) sim.trees.splice(i, 1);
+    }
+
+    // Животные
+    for (let i = sim.animals.length - 1; i >= 0; i--) {
+      const a = sim.animals[i];
+      a.anim += 0.2;
+      if (a.hp <= 0) { bleedSplash(a.x, a.y, 8); sim.animals.splice(i, 1); continue; }
+
+      if (a.kind === 'bird') {
+        a.x += Math.cos(a.angle) * 1.25;
+        a.y += Math.sin(a.angle) * 1.25;
+        if (a.x < 10 || a.x > COLS * TSIZE - 10) a.angle = Math.PI - a.angle;
+        if (a.y < 10 || a.y > ROWS * TSIZE - 10) a.angle = -a.angle;
+        continue;
+      }
+      if (a.kind === 'fish') {
+        const nx = a.x + Math.cos(a.angle) * 1.05;
+        const ny = a.y + Math.sin(a.angle) * 1.05;
+        const nt = worldToTile(nx, ny);
+        if (!isWater(tileAt(nt.tx, nt.ty))) a.angle += Math.PI * 0.75;
+        else { a.x = nx; a.y = ny; }
+        continue;
+      }
+
+      if (a.kind === 'wolf') {
+        const prey = sim.animals.find(o => o.kind === 'deer' && Math.hypot(o.x - a.x, o.y - a.y) < 90);
+        if (prey) {
+          a.angle = Math.atan2(prey.y - a.y, prey.x - a.x);
+          if (Math.hypot(prey.x - a.x, prey.y - a.y) < 11 && sim.tick % 20 === 0) {
+            prey.hp -= 24;
+            bleedSplash(prey.x, prey.y, 6);
+          }
+        } else if (Math.random() < 0.03) a.angle += (Math.random() - 0.5) * 1.2;
+      } else if (Math.random() < 0.03) {
+        a.angle += (Math.random() - 0.5) * 1.2;
+      }
+
+      const spd = a.kind === 'wolf' ? 1.1 : 0.8;
+      const nx = a.x + Math.cos(a.angle) * spd;
+      const ny = a.y + Math.sin(a.angle) * spd;
+      const nt = worldToTile(nx, ny);
+      if (isWater(tileAt(nt.tx, nt.ty)) || tileAt(nt.tx, nt.ty) === TILE.ROCK) a.angle += Math.PI * 0.7;
+      else { a.x = Math.max(12, Math.min(COLS * TSIZE - 12, nx)); a.y = Math.max(12, Math.min(ROWS * TSIZE - 12, ny)); }
+    }
+  }
+
+  // =========================================================================
+  // 10. СТИХИИ, МЕТЕОРИТЫ, КАТАСТРОФЫ И ИНСТРУМЕНТЫ БОГА
+  // =========================================================================
+  function launchMeteor(wx, wy, big = false) {
+    const sx = wx - 150 + (Math.random() - 0.5) * 70;
+    const sy = wy - 250;
+    const dist = Math.hypot(wx - sx, wy - sy) || 1;
+    const spd = big ? 6.5 : 7.8;
+    sim.meteors.push({
+      x: sx, y: sy,
+      targetX: wx, targetY: wy,
+      vx: ((wx - sx) / dist) * spd,
+      vy: ((wy - sy) / dist) * spd,
+      r: big ? 18 : 8 + sim.brushSize * 1.4,
+      big,
+      trail: []
+    });
+  }
+
+  function detonateMeteor(m) {
+    const cx = m.targetX, cy = m.targetY;
+    const radPx = m.r * (m.big ? 5.2 : 4.0);
+    const radTiles = Math.ceil(radPx / TSIZE);
+    const { tx: ctxT, ty: ctyT } = worldToTile(cx, cy);
+
+    sim.shake = m.big ? 26 : 16;
+    sim.flash = m.big ? 0.85 : 0.52;
+    sound.explosion();
+    sim.shockwaves.push({ x: cx, y: cy, r: 8, maxR: radPx * 2.2, alpha: 0.95 });
+
+    pushNews('disaster', m.big ? 'ВНИМАНИЕ: Сверхмощный удар сотряс континент!' : 'Падение метеорита оставило огромный кратер!', cx, cy);
+
+    for (let dy = -radTiles; dy <= radTiles; dy++) {
+      for (let dx = -radTiles; dx <= radTiles; dx++) {
+        const d = Math.hypot(dx, dy);
+        if (d <= radTiles) {
+          const tx = ctxT + dx, ty = ctyT + dy;
+          if (!isWater(tileAt(tx, ty))) {
+            setTile(tx, ty, d < radTiles * 0.35 ? TILE.LAVA : (d < radTiles * 0.78 ? TILE.CRATER : TILE.SCORCHED));
+          }
+        }
+      }
+    }
+
+    sim.buildings.forEach(b => {
+      const d = Math.hypot(b.x - cx, b.y - cy);
+      if (d < radPx * 1.5) {
+        b.hp -= Math.round((m.big ? 240 : 130) * (1 - d / (radPx * 1.5)));
+        b.fire = 90;
+      }
+    });
+    sim.vehicles.forEach(v => {
+      if (Math.hypot(v.x - cx, v.y - cy) < radPx * 1.6) { v.hp = 0; }
+    });
+    sim.humans.forEach(h => {
+      const d = Math.hypot(h.x - cx, h.y - cy);
+      if (d < radPx * 1.6) damageHuman(h, Math.round(110 * (1 - d / (radPx * 1.6))), 'ударная волна');
+    });
+    sim.animals.forEach(a => {
+      if (Math.hypot(a.x - cx, a.y - cy) < radPx * 1.6) a.hp = 0;
+    });
+    rebuildOccupancy();
+  }
+
+  function updateWeather() {
+    sim.timeOfDay = (sim.timeOfDay + 0.00014 * sim.speed) % 1;
+
+    for (let i = sim.meteors.length - 1; i >= 0; i--) {
+      const m = sim.meteors[i];
+      m.trail.push({ x: m.x, y: m.y });
+      if (m.trail.length > 15) m.trail.shift();
+      m.x += m.vx;
+      m.y += m.vy;
+      if (m.y >= m.targetY) {
+        detonateMeteor(m);
+        sim.meteors.splice(i, 1);
+      }
+    }
+
+    for (let i = sim.clouds.length - 1; i >= 0; i--) {
+      const c = sim.clouds[i];
+      c.x += c.vx;
+      c.life--;
+      for (let k = 0; k < 2; k++) {
+        const rx = c.x + (Math.random() - 0.5) * 52;
+        const ry = c.y + (Math.random() - 0.5) * 28;
+        sim.particles.push({ x: rx, y: ry - 10, vx: 0.2, vy: 3.6, life: 8, color: '#7dd3fc', size: 2 });
+        sim.buildings.forEach(b => { if (b.fire > 0 && Math.hypot(b.x - rx, b.y - ry) < 32) b.fire = Math.max(0, b.fire - 0.6); });
+        for (let s = sim.bloodStains.length - 1; s >= 0; s--) {
+          if (Math.hypot(sim.bloodStains[s].x - rx, sim.bloodStains[s].y - ry) < 26) {
+            sim.bloodStains[s].alpha -= 0.05;
+            if (sim.bloodStains[s].alpha <= 0.02) sim.bloodStains.splice(s, 1);
+          }
+        }
+      }
+      if (c.life <= 0) sim.clouds.splice(i, 1);
+    }
+
+    for (let i = sim.tornadoes.length - 1; i >= 0; i--) {
+      const t = sim.tornadoes[i];
+      t.x += t.vx; t.y += t.vy; t.life--;
+      sim.humans.forEach(h => {
+        if (Math.hypot(h.x - t.x, h.y - t.y) < 42) {
+          h.x += (t.x - h.x) * 0.08 - (h.y - t.y) * 0.08;
+          h.y += (t.y - h.y) * 0.08 + (h.x - t.x) * 0.08;
+          if (sim.tick % 20 === 0) damageHuman(h, 8, 'торнадо');
+        }
+      });
+      if (t.life <= 0) sim.tornadoes.splice(i, 1);
+    }
+
+    for (let i = sim.bolts.length - 1; i >= 0; i--) { sim.bolts[i].life--; if (sim.bolts[i].life <= 0) sim.bolts.splice(i, 1); }
+    for (let i = sim.shockwaves.length - 1; i >= 0; i--) { sim.shockwaves[i].r += 4.5; sim.shockwaves[i].alpha -= 0.045; if (sim.shockwaves[i].alpha <= 0) sim.shockwaves.splice(i, 1); }
+    for (let i = sim.particles.length - 1; i >= 0; i--) { sim.particles[i].x += sim.particles[i].vx; sim.particles[i].y += sim.particles[i].vy; sim.particles[i].life--; if (sim.particles[i].life <= 0) sim.particles.splice(i, 1); }
+    if (sim.highlightEvent) { sim.highlightEvent.ttl--; if (sim.highlightEvent.ttl <= 0) sim.highlightEvent = null; }
+    if (sim.shake > 0) sim.shake--;
+    if (sim.flash > 0) sim.flash = Math.max(0, sim.flash - 0.04);
+  }
+
+  // =========================================================================
+  // 11. ПРИМЕНЕНИЕ ИНСТРУМЕНТОВ И ИНСПЕКТОР SIMS
+  // =========================================================================
+  function selectAt(wx, wy) {
+    const h = sim.humans.find(o => Math.hypot(o.x - wx, o.y - wy) < 15);
+    if (h) { sim.selected = { kind: 'human', ref: h }; document.getElementById('sims-inspector').classList.add('open'); updateInspector(); return; }
+    const v = sim.vehicles.find(o => Math.hypot(o.x - wx, o.y - wy) < 20);
+    if (v) { sim.selected = { kind: 'vehicle', ref: v }; document.getElementById('sims-inspector').classList.add('open'); updateInspector(); return; }
+    const b = sim.buildings.find(o => Math.abs(o.x - wx) < o.w * 0.6 && Math.abs(o.y - wy) < o.h * 0.6);
+    if (b) { sim.selected = { kind: 'building', ref: b }; document.getElementById('sims-inspector').classList.add('open'); updateInspector(); return; }
+
+    sim.selected = null;
+    sim.followSelected = false;
+    document.getElementById('sims-inspector').classList.remove('open');
+  }
+
+  function updateInspector() {
+    if (!sim.selected) return;
+    const { kind, ref } = sim.selected;
+    const avatar = document.getElementById('insp-avatar');
+    const nameEl = document.getElementById('insp-name');
+    const roleEl = document.getElementById('insp-role');
+    const actEl = document.getElementById('insp-action');
+    const needsEl = document.getElementById('insp-needs');
+
+    const bar = (lbl, val, col) => `
+      <div class="need-row">
+        <div class="need-top"><span>${lbl}</span><strong>${Math.round(val)}%</strong></div>
+        <div class="need-track"><div class="need-fill" style="width:${Math.max(0, Math.min(100, val))}%;background:${col};"></div></div>
+      </div>`;
+
+    if (kind === 'human') {
+      const city = ref.cityId !== null ? sim.cities[ref.cityId] : null;
+      const roleMap = { citizen: 'Горожанин', builder: 'Строитель', farmer: 'Фермер', warrior: 'Воин', bandit: 'Бандит', police: 'Полицейский', medic: 'Врач', firefighter: 'Пожарный' };
+      avatar.textContent = ref.role === 'bandit' ? '🥷' : (ref.role === 'warrior' ? '⚔️' : (ref.role === 'police' ? '👮' : '🧑'));
+      nameEl.textContent = ref.name;
+      roleEl.textContent = `${roleMap[ref.role] || 'Житель'} • ${city ? city.name : 'Без гражданства'}`;
+      actEl.textContent = `💭 ${ref.actionText}${ref.bleeding > 2 ? ' • 🩸 Кровотечение!' : ''}`;
+      needsEl.innerHTML =
+        bar('❤️ Здоровье', (ref.hp / ref.maxHp) * 100, ref.hp > 40 ? '#22c55e' : '#f43f5e') +
+        bar('🍔 Сытость', ref.hunger, '#38bdf8') +
+        bar('💰 Бюджет / Наличные', Math.min(100, ref.money), '#fbbf24');
+    } else if (kind === 'vehicle') {
+      avatar.textContent = '🚗';
+      nameEl.textContent = ref.name;
+      roleEl.textContent = ref.sunken ? 'Затонул в воде' : 'Дорожный транспорт';
+      actEl.textContent = `🚦 ${ref.actionText}`;
+      needsEl.innerHTML = bar('🔧 Целостность', (ref.hp / ref.maxHp) * 100, '#38bdf8');
+    } else if (kind === 'building') {
+      avatar.textContent = '🏛️';
+      nameEl.textContent = ref.name;
+      roleEl.textContent = `Стадия: ${ref.stage}/3 • ${ref.fire > 0 ? 'ПОЖАР!' : 'Исправно'}`;
+      actEl.textContent = 'Построено на выделенном участке без перекрытия дорог';
+      needsEl.innerHTML = bar('🧱 Прочность', (ref.hp / ref.maxHp) * 100, '#22c55e');
+    }
+  }
+
+  function applyToolAt(wx, wy, isClick) {
+    const t = sim.tool;
+    const { tx, ty } = worldToTile(wx, wy);
+    const r = sim.brushSize;
+
+    if (t === 'inspect') { if (isClick) selectAt(wx, wy); return; }
+
+    if (t === 'found_city') {
+      if (isClick && !isWater(tileAt(tx, ty))) {
+        const c = createCity(wx, wy);
+        for (let i = 0; i < 4; i++) spawnHuman(wx + (i - 1.5) * 12, wy + 22, i === 0 ? 'builder' : 'citizen', c.id);
+      }
+      return;
+    }
+
+    if (t === 'house' || t === 'farm') {
+      if (isClick) {
+        const tid = (tx >= 0 && tx < COLS && ty >= 0 && ty < ROWS && territory[ty * COLS + tx] >= 0) ? territory[ty * COLS + tx] : 0;
+        const ok = placeBuildingSafe(wx, wy, t, sim.cities.length ? tid : null, 3, false);
+        if (!ok) {
+          pushNews('civ', 'Строительство отклонено: участок занят дорогой, водой или другим зданием!', wx, wy);
+        }
+      }
+      return;
+    }
+
+    if (['citizen', 'builder', 'warrior', 'bandit'].includes(t)) {
+      if (isClick || sim.tick % 10 === 0) spawnHuman(wx, wy, t, t === 'bandit' ? null : undefined);
+      return;
+    }
+
+    if (['car', 'police', 'ambulance', 'firetruck'].includes(t)) {
+      if (isClick) {
+        const v = spawnVehicleOnRoad(wx, wy, t);
+        if (!v) pushNews('civ', 'Машину можно поставить только рядом с дорогой или мостом!', wx, wy);
+      }
+      return;
+    }
+
+    if (t === 'declare_war') {
+      if (isClick && sim.cities.length >= 2) {
+        for (let i = 0; i < sim.cities.length; i++) {
+          for (let j = i + 1; j < sim.cities.length; j++) declareWar(sim.cities[i], sim.cities[j], i > 0);
+        }
+      }
+      return;
+    }
+
+    if (t === 'make_peace') {
+      if (isClick && sim.wars.size > 0) {
+        sim.wars.clear();
+        pushNews('civ', 'Подписан всеобщий мирный договор между всеми городами!', wx, wy);
+      }
+      return;
+    }
+
+    if (t === 'riot') {
+      if (isClick) {
+        let count = 0;
+        sim.humans.forEach(h => {
+          if (Math.hypot(h.x - wx, h.y - wy) < 75 && h.role === 'citizen') {
+            h.role = 'bandit';
+            h.clothColor = '#18181b';
+            h.wanted = 100;
+            count++;
+          }
+        });
+        if (count > 0) pushNews('crime', `Бунт! ${count} горожан подняли вооруженный мятеж!`, wx, wy);
+      }
+      return;
+    }
+
+    if (t === 'plague') {
+      if (isClick) {
+        sim.humans.forEach(h => { if (Math.hypot(h.x - wx, h.y - wy) < 65) h.infected = true; });
+        pushNews('disaster', 'Вспышка неизвестной эпидемии зафиксирована в квартале!', wx, wy);
+      }
+      return;
+    }
+
+    if (t === 'heal_rain') {
+      sim.humans.forEach(h => { if (Math.hypot(h.x - wx, h.y - wy) < r * TSIZE + 20) { h.hp = h.maxHp; h.bleeding = 0; h.infected = false; } });
+      sim.buildings.forEach(b => { if (Math.hypot(b.x - wx, b.y - wy) < r * TSIZE + 20) b.fire = 0; });
+      return;
+    }
+
+    if (t === 'meteor') { if (isClick || sim.tick % 16 === 0) launchMeteor(wx, wy, false); return; }
+    if (t === 'nuke')   { if (isClick) launchMeteor(wx, wy, true); return; }
+    if (t === 'lightning') {
+      if (isClick || sim.tick % 10 === 0) {
+        sim.bolts.push({ x: wx, y: wy, life: 12 });
+        sim.flash = 0.45; sim.shake = 8; sound.thunder();
+        sim.buildings.forEach(b => { if (Math.hypot(b.x - wx, b.y - wy) < 38) { b.hp -= 45; b.fire = 85; } });
+        sim.humans.forEach(h => { if (Math.hypot(h.x - wx, h.y - wy) < 28) damageHuman(h, 65, 'удар молнии'); });
+      }
+      return;
+    }
+    if (t === 'cloud') { if (isClick || sim.tick % 24 === 0) sim.clouds.push({ x: wx, y: wy, vx: 0.25, life: 320 }); return; }
+    if (t === 'tornado') { if (isClick || sim.tick % 30 === 0) sim.tornadoes.push({ x: wx, y: wy, vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6, life: 320 }); return; }
+
+    // Кисти ландшафта и дорог
+    let changedRoad = false;
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r) continue;
+        const cx = tx + dx, cy = ty + dy;
+        const cur = tileAt(cx, cy);
+        if (t === 'road') {
+          if (occupancy[cy * COLS + cx] !== OCC.BUILDING) {
+            setTile(cx, cy, isWater(cur) ? TILE.BRIDGE : TILE.ROAD);
+            changedRoad = true;
+          }
+        } else if (t === 'soil') { setTile(cx, cy, TILE.GRASS); changedRoad = true; }
+        else if (t === 'sand') { setTile(cx, cy, TILE.SAND); changedRoad = true; }
+        else if (t === 'rock') { setTile(cx, cy, TILE.ROCK); changedRoad = true; }
+        else if (t === 'water') { setTile(cx, cy, TILE.WATER); changedRoad = true; }
+        else if (t === 'lava') { setTile(cx, cy, TILE.LAVA); changedRoad = true; }
+        else if (t === 'frost') { if (isWater(cur)) setTile(cx, cy, TILE.ICE); else if (cur === TILE.LAVA) setTile(cx, cy, TILE.ROCK); }
+        else if (t === 'tree') { if (Math.random() < 0.08) spawnTree(cx * TSIZE + 8, cy * TSIZE + 8); }
+      }
+    }
+    if (changedRoad) rebuildOccupancy();
+  }
+
+  // =========================================================================
+  // 12. ОТРИСОВКА МИРА, ГРАНИЦ, ЗДАНИЙ, МАШИН, ЛЮДЕЙ И КРОВИ
+  // =========================================================================
+  function tileColor(t, v) {
+    const s = (v % 3) * 4 - 4;
+    switch (t) {
+      case TILE.DEEP_WATER: return `rgb(${14 + s}, ${78 + s}, ${148 + s})`;
+      case TILE.WATER:      return `rgb(${32 + s}, ${146 + s}, ${222 + s})`;
+      case TILE.ICE:        return '#bae6fd';
+      case TILE.SAND:       return `rgb(${238 + s}, ${206 + s}, ${130 + s})`;
+      case TILE.GRASS:      return `rgb(${74 + s}, ${168 + s}, ${82 + s})`;
+      case TILE.PARK:       return `rgb(${62 + s}, ${186 + s}, ${96 + s})`;
+      case TILE.ROCK:       return `rgb(${100 + s}, ${108 + s}, ${122 + s})`;
+      case TILE.ROAD:       return '#334155';
+      case TILE.BRIDGE:     return '#92400e';
+      case TILE.SCORCHED:   return '#27272a';
+      case TILE.CRATER:     return '#18181b';
+      case TILE.LAVA:       return (sim.tick + v) % 10 < 5 ? '#f97316' : '#ef4444';
+      default:              return '#4ade80';
+    }
+  }
+
+  function renderWorld() {
+    ctx.fillStyle = '#050a14';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    if (sim.shake > 0) ctx.translate((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7);
+    if (sim.followSelected && sim.selected && sim.selected.ref) {
+      sim.cam.x = W * 0.5 - sim.selected.ref.x * sim.cam.zoom;
+      sim.cam.y = H * 0.5 - sim.selected.ref.y * sim.cam.zoom;
+    }
+    ctx.translate(sim.cam.x, sim.cam.y);
+    ctx.scale(sim.cam.zoom, sim.cam.zoom);
+
+    // 1. Тайлы рельефа, дорог и политических границ
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const idx = y * COLS + x;
+        const t = terrain[idx];
+        const px = x * TSIZE, py = y * TSIZE;
+        ctx.fillStyle = tileColor(t, variant[idx]);
+        ctx.fillRect(px, py, TSIZE + 0.5, TSIZE + 0.5);
+
+        // Осевая разметка дорог
+        if (t === TILE.ROAD) {
+          ctx.fillStyle = 'rgba(248, 250, 252, 0.45)';
+          if (isRoad(tileAt(x + 1, y)) && !isRoad(tileAt(x, y + 1)) && x % 2 === 0) {
+            ctx.fillRect(px + 3, py + 7, 10, 1.5);
+          } else if (isRoad(tileAt(x, y + 1)) && !isRoad(tileAt(x + 1, y)) && y % 2 === 0) {
+            ctx.fillRect(px + 7, py + 3, 1.5, 10);
+          }
+        }
+
+        // Подсветка границ королевств в режиме "Границы"
+        if (sim.viewMode === 'politics') {
+          const tid = territory[idx];
+          if (tid >= 0 && sim.cities[tid]) {
+            ctx.fillStyle = sim.cities[tid].color + '44';
+            ctx.fillRect(px, py, TSIZE, TSIZE);
+          }
+        }
+      }
+    }
+
+    // 2. Пятна крови
+    sim.bloodStains.forEach(bs => {
+      const m = sim.viewMode === 'blood' ? 1.4 : 1.0;
+      ctx.fillStyle = `rgba(153, 27, 27, ${Math.min(0.95, bs.alpha * m)})`;
+      ctx.beginPath();
+      ctx.arc(bs.x, bs.y, bs.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    const isNight = sim.timeOfDay < 0.24 || sim.timeOfDay > 0.76;
+
+    // 3. Объемные здания городов
+    sim.buildings.forEach(b => {
+      const bx = b.x - b.w * 0.5, by = b.y - b.h * 0.5;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(bx + 4, by + 5, b.w, b.h);
+
+      ctx.fillStyle = b.wallColor;
+      ctx.fillRect(bx, by, b.w, b.h);
+
+      if (b.kind === 'farm') {
+        // Грядки на ферме
+        ctx.fillStyle = '#65a30d';
+        for (let r = 4; r < b.h - 4; r += 6) ctx.fillRect(bx + 4, by + r, b.w - 8, 3);
+      } else {
+        // Крыша с цветом королевства
+        ctx.fillStyle = b.roofColor;
+        ctx.fillRect(bx - 1, by - 5, b.w + 2, b.h * 0.65);
+
+        // Светящиеся окна ночью
+        ctx.fillStyle = isNight ? '#fde047' : '#38bdf8';
+        ctx.fillRect(bx + 5, by + b.h - 11, 7, 6);
+        ctx.fillRect(bx + b.w - 12, by + b.h - 11, 7, 6);
+      }
+
+      if (b.kind === 'hall' && b.cityId !== null && sim.cities[b.cityId]) {
+        const c = sim.cities[b.cityId];
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(`${c.banner} ${c.name}`, b.x, by - 11);
+      }
+    });
+
+    // 4. Машины на дорогах
+    sim.vehicles.forEach(v => {
+      ctx.save();
+      ctx.translate(v.x, v.y);
+      ctx.rotate(v.angle);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(-v.w * 0.5 + 2, -v.h * 0.5 + 2, v.w, v.h);
+      ctx.fillStyle = v.color;
+      ctx.beginPath();
+      ctx.roundRect(-v.w * 0.5, -v.h * 0.5, v.w, v.h, 3);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(v.w * 0.08, -v.h * 0.35, v.w * 0.24, v.h * 0.7);
+      if (v.siren) {
+        ctx.fillStyle = ((sim.tick >> 3) & 1) ? '#ef4444' : '#3b82f6';
+        ctx.fillRect(-2, -v.h * 0.3, 4, v.h * 0.6);
+      }
+      if ((isNight || v.siren) && !v.sunken) {
+        ctx.fillStyle = 'rgba(254, 249, 195, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(v.w * 0.5, -3);
+        ctx.lineTo(v.w * 0.5 + 34, -12);
+        ctx.lineTo(v.w * 0.5 + 34, 12);
+        ctx.lineTo(v.w * 0.5, 3);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+
+    // 5. Люди (жители, воины, полиция, бандиты, медики)
+    sim.humans.forEach(h => {
+      const isSel = sim.selected && sim.selected.ref === h;
+      if (h.swimming) {
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.7)';
+        ctx.beginPath();
+        ctx.ellipse(h.x, h.y + 1, 7, 4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(h.x + 1, h.y + 5, 4.5, 2.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = h.clothColor;
+      ctx.beginPath();
+      ctx.roundRect(h.x - 3.2, h.y - 4.5, 6.4, 6.5, 2);
+      ctx.fill();
+
+      ctx.fillStyle = h.infected ? '#84cc16' : h.skinColor;
+      ctx.beginPath();
+      ctx.arc(h.x, h.y - 7.5, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Меч у воина или нож у бандита
+      if (h.role === 'warrior' || h.role === 'bandit') {
+        ctx.strokeStyle = h.role === 'warrior' ? '#e2e8f0' : '#f43f5e';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(h.x + 3, h.y - 2);
+        ctx.lineTo(h.x + 8, h.y - 7);
+        ctx.stroke();
+      }
+
+      if (isSel) {
+        const by = h.y - 20 + Math.sin(sim.tick * 0.12) * 2;
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.moveTo(h.x, by - 6); ctx.lineTo(h.x + 4, by); ctx.lineTo(h.x, by + 6); ctx.lineTo(h.x - 4, by);
+        ctx.closePath(); ctx.fill();
+      }
+    });
+
+    // 6. Деревья и животные
+    sim.trees.forEach(tr => {
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.beginPath(); ctx.arc(tr.x + 3, tr.y + 3, tr.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath(); ctx.arc(tr.x, tr.y, tr.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath(); ctx.arc(tr.x - 2, tr.y - 2, tr.r * 0.62, 0, Math.PI * 2); ctx.fill();
+    });
+
+    sim.animals.forEach(a => {
+      ctx.fillStyle = a.kind === 'wolf' ? '#475569' : (a.kind === 'fish' ? '#fb923c' : (a.kind === 'bird' ? '#f8fafc' : '#b45309'));
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.kind === 'bird' ? 2.5 : 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 7. Стихии и подсветка события из новостной ленты
+    sim.meteors.forEach(m => {
+      if (m.trail.length > 1) {
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.8)';
+        ctx.lineWidth = m.r * 1.6;
+        ctx.beginPath();
+        m.trail.forEach((pt, i) => i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.fill();
+    });
+
+    sim.bolts.forEach(b => {
+      ctx.strokeStyle = `rgba(254, 249, 195, ${b.life / 12})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(b.x - 16, b.y - 150); ctx.lineTo(b.x + 10, b.y - 80); ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    });
+
+    sim.shockwaves.forEach(sw => {
+      ctx.strokeStyle = `rgba(253, 224, 71, ${sw.alpha})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2); ctx.stroke();
+    });
+
+    sim.clouds.forEach(c => {
+      ctx.fillStyle = 'rgba(51, 65, 85, 0.8)';
+      ctx.beginPath(); ctx.arc(c.x, c.y, 22, 0, Math.PI * 2); ctx.fill();
+    });
+
+    sim.tornadoes.forEach(t => {
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.65)';
+      ctx.beginPath(); ctx.arc(t.x, t.y, 18, 0, Math.PI * 2); ctx.stroke();
+    });
+
+    sim.particles.forEach(p => {
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2); ctx.fill();
+    });
+
+    if (sim.highlightEvent) {
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(sim.highlightEvent.x, sim.highlightEvent.y, 26 + Math.sin(sim.tick * 0.25) * 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (isNight && sim.viewMode === 'normal') {
+      ctx.fillStyle = 'rgba(4, 9, 24, 0.36)';
+      ctx.fillRect(0, 0, COLS * TSIZE, ROWS * TSIZE);
+    }
+
+    ctx.restore();
+
+    if (sim.flash > 0) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${sim.flash})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Прицел кисти
+    const sx = sim.pointer.sx, sy = sim.pointer.sy;
+    if (sx > 0 && sy > 0) {
+      ctx.strokeStyle = 'rgba(52, 211, 153, 0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sim.tool === 'inspect' ? 8 : sim.brushSize * TSIZE * sim.cam.zoom, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // =========================================================================
+  // 13. ТЕЛЕМЕТРИЯ И ГЛАВНЫЙ ЦИКЛ
+  // =========================================================================
+  function updateHUD() {
+    if (sim.tick % 10 !== 0) return;
+    document.getElementById('st-civs').textContent = `${sim.cities.length} / ${sim.humans.length}`;
+    document.getElementById('st-cars').textContent = sim.vehicles.length;
+    const warriors = sim.humans.filter(h => h.role === 'warrior').length;
+    const bandits = sim.humans.filter(h => h.role === 'bandit' || h.wanted > 0).length;
+    document.getElementById('st-war').textContent = `${warriors} / ${bandits}`;
+
+    const mins = Math.floor(sim.timeOfDay * 24 * 60);
+    document.getElementById('st-time').textContent = `${String(Math.floor(mins / 60) % 24).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+    if (sim.selected) updateInspector();
+  }
+
+  function mainLoop() {
+    if (sim.pointer.down && sim.tool !== 'inspect') applyToolAt(sim.pointer.wx, sim.pointer.wy, false);
+    for (let s = 0; s < sim.speed; s++) {
+      sim.tick++;
+      updateCitiesAI();
+      updateHumans();
+      updateVehicles();
+      updateBuildingsAndNature();
+      updateWeather();
+    }
+    renderWorld();
+    updateHUD();
+    requestAnimationFrame(mainLoop);
+  }
+
+  function toWorld(sx, sy) {
+    return { wx: (sx - sim.cam.x) / sim.cam.zoom, wy: (sy - sim.cam.y) / sim.cam.zoom };
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    sim.pointer.sx = e.clientX; sim.pointer.sy = e.clientY;
+    const { wx, wy } = toWorld(e.clientX, e.clientY);
+    sim.pointer.wx = wx; sim.pointer.wy = wy;
+    if (e.button === 2 || e.button === 1) {
+      sim.cam.drag = true; sim.cam.sx = e.clientX; sim.cam.sy = e.clientY; sim.cam.cx = sim.cam.x; sim.cam.cy = sim.cam.y;
+      return;
+    }
+    sim.pointer.down = true;
+    applyToolAt(wx, wy, true);
+  });
+
+  window.addEventListener('pointermove', e => {
+    sim.pointer.sx = e.clientX; sim.pointer.sy = e.clientY;
+    const { wx, wy } = toWorld(e.clientX, e.clientY);
+    sim.pointer.wx = wx; sim.pointer.wy = wy;
+    if (sim.cam.drag) {
+      sim.cam.x = sim.cam.cx + (e.clientX - sim.cam.sx);
+      sim.cam.y = sim.cam.cy + (e.clientY - sim.cam.sy);
+    }
+  });
+
+  window.addEventListener('pointerup', () => { sim.pointer.down = false; sim.cam.drag = false; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (e.ctrlKey || e.shiftKey) {
+      sim.cam.zoom = Math.max(0.65, Math.min(2.4, sim.cam.zoom * (e.deltaY < 0 ? 1.12 : 0.88)));
+    } else {
+      sim.brushSize = Math.max(1, Math.min(10, sim.brushSize + (e.deltaY < 0 ? 1 : -1)));
+    }
+  }, { passive: false });
+
+  // События интерфейса
+  document.getElementById('news-ticker-bar').addEventListener('click', () => {
+    document.getElementById('news-drawer').classList.toggle('open');
+  });
+  document.getElementById('news-close').addEventListener('click', () => {
+    document.getElementById('news-drawer').classList.remove('open');
+  });
+
+  document.querySelectorAll('.cat-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.dock-group').forEach(g => g.classList.toggle('active', g.dataset.group === tab.dataset.cat));
+    });
+  });
+
+  const tipEl = document.getElementById('tool-tooltip');
+  let tipT = null;
+  function showTip(txt) {
+    if (!txt) return;
+    tipEl.textContent = txt; tipEl.classList.add('visible');
+    clearTimeout(tipT); tipT = setTimeout(() => tipEl.classList.remove('visible'), 2800);
+  }
+
+  document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sim.tool = btn.dataset.tool;
+      showTip(btn.dataset.tip);
+    });
+    btn.addEventListener('mouseenter', () => showTip(btn.dataset.tip));
+  });
+
+  document.querySelectorAll('.sz-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sz-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sim.brushSize = Number(btn.dataset.sz);
+    });
+  });
+
+  document.querySelectorAll('.spd-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.spd-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sim.speed = Number(btn.dataset.spd);
+    });
+  });
+
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sim.viewMode = btn.dataset.view;
+    });
+  });
+
+  document.getElementById('insp-close').addEventListener('click', () => {
+    sim.selected = null; sim.followSelected = false;
+    document.getElementById('sims-inspector').classList.remove('open');
+  });
+  document.getElementById('insp-heal').addEventListener('click', () => {
+    if (!sim.selected) return;
+    const r = sim.selected.ref;
+    r.hp = r.maxHp; if ('bleeding' in r) r.bleeding = 0; if ('infected' in r) r.infected = false; if ('fire' in r) r.fire = 0;
+    updateInspector();
+  });
+  document.getElementById('insp-harm').addEventListener('click', () => {
+    if (!sim.selected) return;
+    const { kind, ref } = sim.selected;
+    if (kind === 'human') damageHuman(ref, 35, 'кара свыше');
+    else { ref.hp -= 40; if ('fire' in ref) ref.fire = 60; }
+    updateInspector();
+  });
+  document.getElementById('insp-follow').addEventListener('click', () => {
+    sim.followSelected = !sim.followSelected;
+    if (!sim.followSelected) { sim.cam.x = 0; sim.cam.y = 0; }
+  });
+
+  const biomeSel = document.getElementById('biome-select');
+  biomeSel.addEventListener('change', () => generateWorld(biomeSel.value));
+  document.getElementById('btn-reset').addEventListener('click', () => generateWorld(biomeSel.value));
+
+  const audioBtn = document.getElementById('btn-audio');
+  audioBtn.addEventListener('click', () => {
+    sound.toggle();
+    audioBtn.textContent = sound.enabled ? '🔊 Звук' : '🔇 Звук';
+    audioBtn.classList.toggle('active', sound.enabled);
+  });
+
+  document.getElementById('btn-snap').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = `terraforge_civ_${Date.now()}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+
+  window.addEventListener('resize', () => { resizeCanvas(); generateWorld(sim.biome); });
+
+  resizeCanvas();
+  generateWorld('twin_cities');
+  requestAnimationFrame(mainLoop);
+})();
+</script>
+</body>
+</html>
